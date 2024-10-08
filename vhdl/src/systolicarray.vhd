@@ -10,7 +10,7 @@ use work.minitpu_pkg.all;
 entity systolicarray is
     port (
         clk : in std_logic;
-        
+
         enable : in std_logic;
 
         data_in : in vector_signal;
@@ -22,9 +22,7 @@ end entity systolicarray;
 
 architecture behave of systolicarray is
 
-    -- Accumulated signal between PEs, are shifted downwards. PE(i, j).accum_out => PE(i + 1, j).accum_in
     signal accum : matrix_signal;
-    -- Data signal between PEs, are shifted to the right. PE(i, j).data_out => PE(i, j + 1).data_in
     signal data : matrix_signal;
 
 begin
@@ -96,9 +94,9 @@ begin
                     port map (
                         clk => clk,
                         enable => enable,
-                        data_in => data(x - 1, y),
+                        data_in => data(x, y - 1),
                         data_out => data(x, y),
-                        accum_in => accum(x, y - 1),
+                        accum_in => accum(x - 1, y),
                         accum_out => accum(x, y),
                         weight => weight
                     );
@@ -106,11 +104,11 @@ begin
         end generate;
     end generate;
 
-    -- Output data from the last PE
+    -- Output accumulated value of bottom row of PEs
     process (all)
     begin
         for i in 0 to (WIDTH - 1) loop
-            data_out(i) <= data(i, WIDTH - 1);
+            data_out(i) <= accum(WIDTH - 1, i);
         end loop;
     end process;
 

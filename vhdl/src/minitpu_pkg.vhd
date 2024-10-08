@@ -3,7 +3,7 @@ use ieee.std_logic_1164.all;
 
 package minitpu_pkg is
 
-    constant WIDTH : integer := 4;
+    constant WIDTH : integer := 3;
 
     constant INTEGER_WIDTH : integer := 8;
     

@@ -37,8 +37,6 @@ begin
                 accum := std_logic_vector(unsigned(accum_in) + unsigned(data_in) * unsigned(weight));
                 accum_out <= accum(7 downto 0);
                 data_out <= data_in;
-                
-                report "PE(" & integer'image(x) & ", " & integer'image(y) & ") accum_out: " & to_hstring(std_logic_vector(unsigned(accum_in) + unsigned(data_in) * unsigned(weight))) & " data_in: " & to_hstring(data_in);
             end if;
         end if;
     end process;
