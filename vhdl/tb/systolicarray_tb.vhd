@@ -26,7 +26,7 @@ architecture behave of systolicarray_tb is
         (0, 0, 9),
         (0, 0, 0),
         (0, 0, 0)
-    );    
+    );
 
 begin
 
