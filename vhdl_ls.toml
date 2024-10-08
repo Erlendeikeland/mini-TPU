@@ -1,0 +1,6 @@
+[libraries]
+
+default.files = [
+    'vhdl/src/*vhd',
+    'vhdl/tb/*vhd'
+]
