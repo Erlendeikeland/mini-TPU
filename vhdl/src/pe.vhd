@@ -6,21 +6,13 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity PE is
-    generic (
-        x : integer := 0;
-        y : integer := 0
-    );
     port (
         clk : in std_logic;
-
         enable : in std_logic;
-
         data_in : in std_logic_vector(7 downto 0);
         data_out : out std_logic_vector(7 downto 0);
-
         accum_in : in std_logic_vector(7 downto 0);
         accum_out : out std_logic_vector(7 downto 0);
-
         weight : in std_logic_vector(7 downto 0)
     );
 end entity PE;

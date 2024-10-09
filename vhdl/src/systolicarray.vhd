@@ -31,10 +31,6 @@ begin
             -- Upper left corner
             upper_left_if : if x = 0 and y = 0 generate
                 PE_inst : entity work.PE
-                    generic map (
-                        x => x,
-                        y => y
-                    )
                     port map (
                         clk => clk,
                         enable => enable,
@@ -49,14 +45,10 @@ begin
             -- Upper row
             upper_row_if : if x = 0 and y > 0 generate
                 PE_inst : entity work.PE
-                    generic map (
-                        x => x,
-                        y => y
-                    )
                     port map (
                         clk => clk,
                         enable => enable,
-                        data_in => data(x, y-1),
+                        data_in => data(x, y - 1),
                         data_out => data(x, y),
                         accum_in => (others => '0'),
                         accum_out => accum(x, y),
@@ -67,16 +59,12 @@ begin
             -- Left column
             left_column_if : if x > 0 and y = 0 generate
                 PE_inst : entity work.PE
-                    generic map (
-                        x => x,
-                        y => y
-                    )
                     port map (
                         clk => clk,
                         enable => enable,
                         data_in => data_in(x),
                         data_out => data(x, y),
-                        accum_in => accum(x-1, y),
+                        accum_in => accum(x - 1, y),
                         accum_out => accum(x, y),
                         weight => weight
                     );
@@ -85,16 +73,12 @@ begin
             -- Remaining PEs
             remaining_if : if x > 0 and y > 0 generate
                 PE_inst : entity work.PE
-                    generic map (
-                        x => x,
-                        y => y
-                    )
                     port map (
                         clk => clk,
                         enable => enable,
-                        data_in => data(x, y-1),
+                        data_in => data(x, y - 1),
                         data_out => data(x, y),
-                        accum_in => accum(x-1, y),
+                        accum_in => accum(x - 1, y),
                         accum_out => accum(x, y),
                         weight => weight
                     );
