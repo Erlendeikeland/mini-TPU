@@ -7,13 +7,24 @@ use std.textio.all;
 
 package minitpu_pkg is
 
+    constant SIZE : natural := 3;
+
     constant DATA_WIDTH : natural := 8;
     constant WEIGHT_WIDTH : natural := 8;
 
+    constant MAX_ACCUM_WIDTH : natural := 18;
+
     type data_vector_t is array(natural range <>) of std_logic_vector((DATA_WIDTH - 1) downto 0);
     type weight_vector_t is array(natural range <>) of std_logic_vector((WEIGHT_WIDTH - 1) downto 0);
+    type output_vector_t is array(natural range <>) of std_logic_vector((MAX_ACCUM_WIDTH - 1) downto 0);
 
     function get_accum_width(row : natural) return natural;
+
+
+
+
+
+
 
 
     -- DEBUGGING --
