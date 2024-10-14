@@ -51,7 +51,7 @@ begin
                 
                 if (ACCUM_IN_WIDTH > 0) and (ACCUM_IN_WIDTH < ACCUM_OUT_WIDTH) then
                     -- Output width is greater than input width, zero extend input
-                    sum := std_logic_vector(unsigned(accum_in(accum_in'high) & accum_in) + unsigned(product(product'high) & product));
+                    sum := std_logic_vector(unsigned('0' & accum_in) + unsigned('0' & product));
                 elsif (ACCUM_IN_WIDTH > 0) and (ACCUM_IN_WIDTH = ACCUM_OUT_WIDTH) then
                     -- Output width is equal to input width
                     sum := std_logic_vector(unsigned(accum_in) + unsigned(product));
