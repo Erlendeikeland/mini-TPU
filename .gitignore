@@ -3,3 +3,4 @@
 *.ini
 *.wlf
 /vivado
+/vhdl/wlf*

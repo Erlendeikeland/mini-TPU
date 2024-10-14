@@ -8,7 +8,7 @@ use std.textio.all;
 package minitpu_pkg is
 
     -- SYSTOLIC ARRAY --
-    constant SIZE : natural := 3;
+    constant SIZE : natural := 8;
 
     -- Data interface
     constant DATA_WIDTH : natural := 8;
@@ -23,7 +23,7 @@ package minitpu_pkg is
 
 
 
-    constant MAX_ACCUM_WIDTH : natural := 18;
+    constant MAX_ACCUM_WIDTH : natural := 19;
 
     type output_vector_t is array(natural range <>) of std_logic_vector((MAX_ACCUM_WIDTH - 1) downto 0);
 
