@@ -26,7 +26,7 @@ end entity PE;
 
 architecture behave of PE is
 
-    signal weight_reg : std_logic_vector((DATA_WIDTH - 1) downto 0);
+    signal weight_reg : std_logic_vector((WEIGHT_WIDTH - 1) downto 0);
 
 begin
 
