@@ -20,7 +20,7 @@ package minitpu_pkg is
     
 
 
-
+            
 
 
     constant MAX_ACCUM_WIDTH : natural := 19;

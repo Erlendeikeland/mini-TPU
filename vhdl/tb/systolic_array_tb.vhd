@@ -7,10 +7,10 @@ use std.env.stop;
 use work.minitpu_pkg.all;
 
 
-entity systolicarray_tb is
-end entity systolicarray_tb;
+entity systolic_array_tb is
+end entity systolic_array_tb;
 
-architecture behave of systolicarray_tb is
+architecture behave of systolic_array_tb is
 
     constant CLK_PERIOD : time := 10 ns;
     signal clk : std_logic := '1';
@@ -95,7 +95,7 @@ architecture behave of systolicarray_tb is
 
 begin
 
-    systolicarray_inst: entity work.systolicarray
+    systolic_array_inst: entity work.systolic_array
         port map(
             clk => clk,
             enable => enable,
@@ -151,6 +151,9 @@ begin
         variable errors : natural := 0;
     begin
         wait until start = '1';
+
+        report_line("Checking results...");
+
         for i in 0 to (SIZE * 2 - 1) loop
             for j in 0 to (SIZE - 1) loop
                 if i - j >= 0 and i - j < SIZE then

@@ -6,7 +6,7 @@ use ieee.std_logic_1164.all;
 
 use work.minitpu_pkg.all;
 
-entity systolicarray is
+entity systolic_array is
     port (
         clk : in std_logic;
 
@@ -20,9 +20,9 @@ entity systolicarray is
         weight_addr : in natural range 0 to (SIZE - 1);
         load_weights : in std_logic
     );
-end entity systolicarray;
+end entity systolic_array;
 
-architecture behave of systolicarray is
+architecture behave of systolic_array is
 
     type data_matrix_t is array (0 to (SIZE - 1), 0 to (SIZE - 1)) of std_logic_vector((DATA_WIDTH - 1) downto 0);
     type accum_matrix_t is array (0 to (SIZE - 1), 0 to (SIZE - 1)) of std_logic_vector((get_accum_width(SIZE - 1) - 1) downto 0);
