@@ -2,8 +2,10 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use ieee.math_real.all;
+use std.env.stop;
 
 use work.minitpu_pkg.all;
+
 
 entity systolicarray_tb is
 end entity systolicarray_tb;
@@ -27,8 +29,6 @@ architecture behave of systolicarray_tb is
     signal expected_matrix : matrix_t;
     signal result : matrix_t;
     
-    signal test : natural := 0;
-
     signal start : std_logic := '0';
 
     procedure calculate_expected_matrix(
@@ -71,8 +71,7 @@ architecture behave of systolicarray_tb is
         constant data_matrix : in matrix_t;
         signal enable : out std_logic;
         signal start : out std_logic;
-        signal data_in : out data_array;
-        signal test : out natural
+        signal data_in : out data_array
     ) is
     begin
         enable <= '1';
@@ -83,7 +82,6 @@ architecture behave of systolicarray_tb is
                 start <= '0';
             end if;
             for j in 0 to (SIZE - 1) loop
-                test <= test + 1;
                 if i - j >= 0 and i - j < SIZE then
                     data_in(j) <= std_logic_vector(to_unsigned(data_matrix(i - j, j), DATA_WIDTH));
                 else
@@ -140,7 +138,11 @@ begin
 
         calculate_expected_matrix(data_matrix, weight_matrix, expected_matrix);
         set_weights(weight_matrix, weights, weight_addr, load_weight);
-        multiply_matrix(data_matrix, enable, start, data_in, test);
+        multiply_matrix(data_matrix, enable, start, data_in);
+
+        wait for CLK_PERIOD * 10;
+
+        stop;
 
         wait;
     end process;
@@ -168,6 +170,8 @@ begin
 
         if errors /= 0 then
             report_line("Test failed with " & integer'image(errors) & " out of " & integer'image(SIZE * SIZE) & " errors.");
+        else
+            report_line("Test passed with no errors out of " & integer'image(SIZE * SIZE) & " checks.");
         end if;
     end process;
 
