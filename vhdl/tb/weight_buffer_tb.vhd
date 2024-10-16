@@ -19,11 +19,11 @@ architecture behave of weight_buffer_tb is
     constant DEPTH : natural := 32;
 
     signal write_data : weight_array := (others => (others => '0'));
-    signal write_addr : std_logic_vector((DEPTH - 1) downto 0);
+    signal write_addr : natural range 0 to (DEPTH - 1);
     signal write_en : std_logic := '0';
 
     signal read_data : weight_array := (others => (others => '0'));
-    signal read_addr : std_logic_vector((DEPTH - 1) downto 0);
+    signal read_addr : natural range 0 to (DEPTH - 1);
     signal read_en : std_logic := '0';
 
 begin
@@ -64,7 +64,7 @@ begin
             for j in 0 to (WIDTH - 1) loop
                 write_data(j) <= std_logic_vector(to_unsigned(i + j, write_data'length));
             end loop;
-            write_addr <= std_logic_vector(to_unsigned(i, write_addr'length));
+            write_addr <= i;
             wait for CLK_PERIOD;
         end loop;
 
@@ -75,7 +75,7 @@ begin
         read_en <= '1';
 
         for i in 0 to (DEPTH - 1) loop
-            read_addr <= std_logic_vector(to_unsigned(i, read_addr'length));
+            read_addr <= i;
             wait for CLK_PERIOD;
         end loop;
 

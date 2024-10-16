@@ -17,12 +17,12 @@ entity data_buffer is
         
         -- Write port
         write_data : in data_array;
-        write_addr : in std_logic_vector((DEPTH - 1) downto 0);
+        write_addr : in natural range 0 to (DEPTH - 1);
         write_en : in std_logic;
 
         -- Read port
         read_data : out data_array;
-        read_addr : in std_logic_vector((DEPTH - 1) downto 0);
+        read_addr : in natural range 0 to (DEPTH - 1);
         read_en : in std_logic
     );
 end entity data_buffer;
@@ -43,7 +43,7 @@ begin
             else
                 if write_en = '1' then
                     for i in 0 to (WIDTH - 1) loop
-                        ram(to_integer(unsigned(write_addr)))(i * DATA_WIDTH + (DATA_WIDTH - 1) downto i * DATA_WIDTH) <= write_data(i);
+                        ram(write_addr)(i * DATA_WIDTH + (DATA_WIDTH - 1) downto i * DATA_WIDTH) <= write_data(i);
                     end loop;
                 end if;
             end if;
@@ -56,7 +56,7 @@ begin
         if rising_edge(clk) then
             if read_en = '1' then
                 for i in 0 to (WIDTH - 1) loop
-                    read_data(i) <= ram(to_integer(unsigned(read_addr)))(i * DATA_WIDTH + (DATA_WIDTH - 1) downto i * DATA_WIDTH);
+                    read_data(i) <= ram(read_addr)(i * DATA_WIDTH + (DATA_WIDTH - 1) downto i * DATA_WIDTH);
                 end loop;
             end if;
         end if;
