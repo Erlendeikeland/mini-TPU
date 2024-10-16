@@ -9,9 +9,9 @@ class File:
         self.name = name
         self.instantiations = instantiations if instantiations is not None else []
 
-    def has_dependency(self, entity):
-        return entity.name in self.instantiations
-    
+    def has_dependency(self, name):
+        return name in self.instantiations
+
 def get_package_name(content):
     match = re.search(r"^\s*package\s+(\w+)\s+is\b", content, re.MULTILINE)
     return match.group(1) if match else None
@@ -31,6 +31,7 @@ def get_package_insts(content):
 def get_compile_order(src_path, top_level_name):
     src_path = os.path.join(os.path.abspath(src_path), "")
 
+    top_level_file = None
     all_files = []
     for path in glob.glob(src_path + "**/*.vhd", recursive=True):
         with open(path, "r") as f:
@@ -38,18 +39,34 @@ def get_compile_order(src_path, top_level_name):
             if get_package_name(content):
                 all_files.append(File(path, get_package_name(content), get_package_insts(content)))
             elif get_entity_name(content):
-                all_files.append(File(path, get_entity_name(content), get_entity_insts(content) + get_package_insts(content)))
+                if get_entity_name(content) == top_level_name:
+                    top_level_file = File(path, get_entity_name(content), get_entity_insts(content) + get_package_insts(content))
+                else:
+                    all_files.append(File(path, get_entity_name(content), get_entity_insts(content) + get_package_insts(content)))
 
-    compile_order = []
-    while all_files:
-        for file in all_files:
-            if not any([file.has_dependency(entity) for entity in all_files]):
-                if any([file.name in entity.instantiations for entity in all_files]) or file.name == top_level_name:
-                    compile_order.append(file)
-                all_files.remove(file)
+    compile_order = recursive_search(top_level_file, all_files)
 
     return compile_order
+    
+def recursive_search(file, all_files, visited=None):
+    if visited is None:
+        visited = set()
 
+    compile_order = []
+    
+    if file.name in visited:
+        return compile_order
+
+    visited.add(file.name)
+
+    for inst in file.instantiations:
+        inst_file = next((f for f in all_files if f.name == inst), None)
+        if inst_file:
+            compile_order += recursive_search(inst_file, all_files, visited)
+    
+    compile_order.append(file)
+
+    return compile_order
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Get compile order of VHDL files")
