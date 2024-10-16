@@ -25,7 +25,7 @@ package minitpu_pkg is
 
     constant MAX_ACCUM_WIDTH : natural := 19;
 
-    type output_vector_t is array(natural range <>) of std_logic_vector((MAX_ACCUM_WIDTH - 1) downto 0);
+    type output_vector_t is array(0 to (SIZE - 1)) of std_logic_vector((MAX_ACCUM_WIDTH - 1) downto 0);
 
     function get_accum_width(row : natural) return natural;
 
