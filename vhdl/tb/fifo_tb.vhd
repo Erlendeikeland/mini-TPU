@@ -55,7 +55,17 @@ begin
     begin
         wait for CLK_PERIOD * 5;
         
-        
+        -- Write to fifo
+        for i in 0 to DEPTH - 1 loop
+            write_data <= std_logic_vector(to_unsigned(i, write_data'length));
+            write_en <= '1';
+            wait for CLK_PERIOD;
+        end loop;
+
+        write_en <= '0';
+
+        -- Check full flag
+        report_line("Full flag: " & to_string(full));
 
         wait for CLK_PERIOD * 5;
 
