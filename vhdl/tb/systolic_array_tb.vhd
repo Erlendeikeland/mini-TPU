@@ -17,7 +17,7 @@ architecture behave of systolic_array_tb is
 
     signal enable : std_logic := '0';
     signal data_in : data_array := (others => (others => '0'));
-    signal data_out : output_vector_t(0 to (SIZE - 1)) := (others => (others => '0'));
+    signal data_out : output_vector_t := (others => (others => '0'));
 
     signal weights : weight_array := (others => (others => '0'));
     signal weight_addr : natural range 0 to (SIZE - 1) := 0;

@@ -20,7 +20,8 @@ package minitpu_pkg is
     
 
 
-            
+    -- FIFO
+    subtype op_t is std_logic_vector(7 downto 0);            
 
 
     constant MAX_ACCUM_WIDTH : natural := 19;

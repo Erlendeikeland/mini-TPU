@@ -4,7 +4,7 @@ proc get_compile_order {path top_level_file} {
     return $output
 }
 
-quietly set script_path [file normalize [file dirname [info script]]]
+quietly set script_path [pwd]
 quietly set project_path [file join $script_path ../../]
 quietly set work_path [file join $script_path work]
 

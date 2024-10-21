@@ -3,10 +3,10 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use std.env.stop;
 
+use work.minitpu_pkg.all;
+
 entity weight_buffer_tb is
 end entity weight_buffer_tb;
-
-use work.minitpu_pkg.all;
 
 architecture behave of weight_buffer_tb is
 

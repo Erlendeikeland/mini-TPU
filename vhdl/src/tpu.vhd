@@ -42,12 +42,12 @@ begin
     systolic_array_inst: entity work.systolic_array
         port map(
             clk => clk,
-            enable => sysarr_enable,
+            enable => ,
             data_in => data_buffer_rdata,
-            data_out => sysarr_data_out,
+            data_out => ,
             weights => weight_buffer_rdata,
-            weight_addr => sysarr_weight_addr,
-            load_weights => sysarr_load_weights
+            weight_addr => ,
+            load_weights => 
         );
 
     weight_buffer_inst: entity work.weight_buffer
@@ -58,12 +58,12 @@ begin
         port map(
             clk => clk,
             reset => reset,
-            write_data => weight_buffer_wdata,
-            write_addr => weight_buffer_waddr,
-            write_en => weight_buffer_wen,
+            write_data => ,
+            write_addr => ,
+            write_en => ,
             read_data => weight_buffer_rdata,
-            read_addr => weight_buffer_raddr,
-            read_en => weight_buffer_ren
+            read_addr => ,
+            read_en => 
         );
 
     data_buffer_inst: entity work.data_buffer
@@ -74,12 +74,12 @@ begin
         port map(
             clk => clk,
             reset => reset,
-            write_data => data_buffer_wdata,
-            write_addr => data_buffer_waddr,
-            write_en => data_buffer_wen,
+            write_data => ,
+            write_addr => ,
+            write_en => ,
             read_data => data_buffer_rdata,
-            read_addr => data_buffer_raddr,
-            read_en => data_buffer_ren
+            read_addr => ,
+            read_en => 
         );
 
 end architecture;

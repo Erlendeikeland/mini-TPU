@@ -4,3 +4,4 @@
 *.wlf
 /vivado
 /vhdl/wlf*
+transcript
