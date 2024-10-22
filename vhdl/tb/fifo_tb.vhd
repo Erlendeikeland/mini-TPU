@@ -112,7 +112,7 @@ begin
                 wait for CLK_PERIOD;
                 assert read_data = test_array(j) report "Mismatch" severity failure;
             end loop;
-        end loop;        
+        end loop;
 
         wait for CLK_PERIOD * 5;
 
