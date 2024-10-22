@@ -31,9 +31,13 @@ architecture rtl of fifo is
     type fifo_t is array(0 to (DEPTH - 1)) of op_t;
     signal fifo : fifo_t;
 
-    signal write_index : integer range 0 to (DEPTH - 1);
-    signal read_index : integer range 0 to (DEPTH - 1);
-    signal count : integer range 0 to DEPTH;
+    signal head : natural;
+    signal tail : natural;
+
+    signal looped : std_logic;
+
+    signal temp_full : std_logic;
+    signal temp_empty : std_logic;
 
 begin
 
@@ -41,30 +45,35 @@ begin
     begin
         if rising_edge(clk) then
             if reset = '1' then
-                write_index <= 0;
-                read_index <= 0;
-                count <= 0;
+                head <= 0;
+                tail <= 0;
+                looped <= '0';
             else
-                if write_en = '1' then
-                    if count < DEPTH then
-                        fifo(write_index) <= write_data;
-                        write_index <= write_index + 1;
-                        count <= count + 1;
+                if write_en = '1' and temp_full = '0' then
+                    fifo(head) <= write_data;
+                    head <= head + 1;
+                    if head = DEPTH - 1 then
+                        head <= 0;
+                        looped <= not looped;
                     end if;
                 end if;
 
-                if read_en = '1' then
-                    if count > 0 then
-                        read_data <= fifo(read_index);
-                        read_index <= read_index + 1;
-                        count <= count - 1;
+                if read_en = '1' and temp_empty = '0' then
+                    read_data <= fifo(tail);
+                    tail <= tail + 1;
+                    if tail = DEPTH - 1 then
+                        tail <= 0;
+                        looped <= not looped;
                     end if;
                 end if;
             end if;
         end if;
     end process;
 
-    full <= '1' when count = DEPTH else '0';
-    empty <= '1' when count = 0 else '0';
+    temp_full <= '1' when looped = '1' and head = tail else '0';
+    temp_empty <= '1' when looped = '0' and head = tail else '0';
+
+    full <= temp_full;
+    empty <= temp_empty;
 
 end architecture;
