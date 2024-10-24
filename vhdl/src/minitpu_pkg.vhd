@@ -8,7 +8,7 @@ use std.textio.all;
 package minitpu_pkg is
 
     -- SYSTOLIC ARRAY --
-    constant SIZE : natural := 8;
+    constant SIZE : natural := 4;
 
     -- Data interface
     constant DATA_WIDTH : natural := 8;

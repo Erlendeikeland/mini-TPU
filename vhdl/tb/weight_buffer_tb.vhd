@@ -16,32 +16,33 @@ architecture behave of weight_buffer_tb is
     signal reset : std_logic := '0';
 
     constant WIDTH : natural := 8;
-    constant DEPTH : natural := 32;
+    constant DEPTH : natural := 8;
 
-    signal write_data : weight_array := (others => (others => '0'));
-    signal write_addr : natural range 0 to (DEPTH - 1);
-    signal write_en : std_logic := '0';
+    signal port_0_enable : std_logic := '0';
+    signal port_0_write_address : natural := 0;
+    signal port_0_write_enable : std_logic := '0';
+    signal port_0_write_data : weight_array := (others => (others => '0'));
 
-    signal read_data : weight_array := (others => (others => '0'));
-    signal read_addr : natural range 0 to (DEPTH - 1);
-    signal read_en : std_logic := '0';
+    signal port_1_enable : std_logic := '0';
+    signal port_1_read_address : natural := 0;
+    signal port_1_read_data : weight_array := (others => (others => '0'));
 
 begin
 
-    weight_buffer_inst : entity work.weight_buffer
-        generic map (
+    weight_buffer_inst: entity work.weight_buffer
+        generic map(
             WIDTH => WIDTH,
             DEPTH => DEPTH
         )
-        port map (
+        port map(
             clk => clk,
-            reset => reset,
-            write_data => write_data,
-            write_addr => write_addr,
-            write_en => write_en,
-            read_data => read_data,
-            read_addr => read_addr,
-            read_en => read_en
+            port_0_enable => port_0_enable,
+            port_0_write_data => port_0_write_data,
+            port_0_write_address => port_0_write_address,
+            port_0_write_enable => port_0_write_enable,
+            port_1_enable => port_1_enable,
+            port_1_read_data => port_1_read_data,
+            port_1_read_address => port_1_read_address
         );
 
     clk <= not clk after CLK_PERIOD / 2;
@@ -55,59 +56,40 @@ begin
     end process;
 
     process
+        variable write_data : weight_array;
     begin
         wait for CLK_PERIOD * 5;
         
-        write_en <= '1';
-        
+        -- Write port 0
+        port_0_enable <= '1';
+        port_0_write_enable <= '1';
         for i in 0 to (DEPTH - 1) loop
+            port_0_write_address <= i;
             for j in 0 to (WIDTH - 1) loop
-                write_data(j) <= std_logic_vector(to_unsigned(i + j, write_data'length));
+                write_data(j) := std_logic_vector(to_unsigned(i * WIDTH + j, DATA_WIDTH));
             end loop;
-            write_addr <= i;
+            port_0_write_data <= write_data;
             wait for CLK_PERIOD;
         end loop;
-
-        write_en <= '0';
+        port_0_enable <= '0';
+        port_0_write_enable <= '0';
 
         wait for CLK_PERIOD * 5;
 
-        read_en <= '1';
-
+        -- Read port 1
+        port_1_enable <= '1';
         for i in 0 to (DEPTH - 1) loop
-            read_addr <= i;
-            wait for CLK_PERIOD;
+            port_1_read_address <= i;
+            wait for CLK_PERIOD * 2;
+            for j in 0 to (WIDTH - 1) loop
+                assert port_1_read_data(j) = std_logic_vector(to_unsigned(i * WIDTH + j, DATA_WIDTH)) report "Error at address " & integer'image(i) & " and data " & integer'image(j) severity failure;
+            end loop;
         end loop;
-
-        read_en <= '0';
+        port_1_enable <= '0';
 
         wait for CLK_PERIOD * 5;
 
         stop;
-    end process;
-
-    process
-        variable errors : natural := 0;
-    begin
-        wait until read_en = '1';
-        wait for CLK_PERIOD * 2;
-
-        report_line("Checking results...");
-
-        for i in 0 to (DEPTH - 1) loop
-            for j in 0 to (WIDTH - 1) loop
-                if read_data(j) /= std_logic_vector(to_unsigned(i + j, read_data'length)) then
-                    errors := errors + 1;
-                end if;
-            end loop;
-            wait for CLK_PERIOD;
-        end loop;
-
-        if errors /= 0 then
-            report_line("Test failed with " & integer'image(errors) & " out of " & integer'image(SIZE * SIZE) & " errors.");
-        else
-            report_line("Test passed with no errors out of " & integer'image(SIZE * SIZE) & " checks.");
-        end if;
     end process;
 
 end architecture;
