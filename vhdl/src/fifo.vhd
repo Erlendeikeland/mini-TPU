@@ -15,12 +15,12 @@ entity fifo is
         reset : in std_logic;
 
         -- Write
-        write_en : in std_logic;
+        write_enable : in std_logic;
         write_data : in op_t;
         full : out std_logic;
         
         -- Read
-        read_en : in std_logic;
+        read_enable : in std_logic;
         read_data : out op_t;
         empty : out std_logic
     );
@@ -44,12 +44,12 @@ begin
     process (clk)
     begin
         if rising_edge(clk) then
-            if reset = '1' then
+            if reset = '0' then
                 head <= 0;
                 tail <= 0;
                 looped <= '0';
             else
-                if write_en = '1' and temp_full = '0' then
+                if write_enable = '1' and temp_full = '0' then
                     fifo(head) <= write_data;
                     head <= head + 1;
                     if head = DEPTH - 1 then
@@ -58,8 +58,7 @@ begin
                     end if;
                 end if;
 
-                if read_en = '1' and temp_empty = '0' then
-                    read_data <= fifo(tail);
+                if read_enable = '1' and temp_empty = '0' then
                     tail <= tail + 1;
                     if tail = DEPTH - 1 then
                         tail <= 0;
@@ -69,6 +68,8 @@ begin
             end if;
         end if;
     end process;
+
+    read_data <= fifo(tail);
 
     temp_full <= '1' when looped = '1' and head = tail else '0';
     temp_empty <= '1' when looped = '0' and head = tail else '0';

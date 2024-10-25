@@ -17,10 +17,10 @@ architecture behave of systolic_array_tb is
 
     signal enable : std_logic := '0';
     signal data_in : data_array := (others => (others => '0'));
-    signal data_out : output_vector_t := (others => (others => '0'));
+    signal data_out : output_array := (others => (others => '0'));
 
     signal weights : weight_array := (others => (others => '0'));
-    signal weight_addr : natural range 0 to (SIZE - 1) := 0;
+    signal weight_address : natural range 0 to (SIZE - 1) := 0;
     signal load_weight : std_logic := '0';
 
     type matrix_t is array (0 to (SIZE - 1), 0 to (SIZE - 1)) of natural;
@@ -102,7 +102,7 @@ begin
             data_in => data_in,
             data_out => data_out,
             weights => weights,
-            weight_addr => weight_addr,
+            weight_address => weight_address,
             load_weights => load_weight
         );
 
@@ -137,7 +137,7 @@ begin
         wait for CLK_PERIOD * 2;
 
         calculate_expected_matrix(data_matrix, weight_matrix, expected_matrix);
-        set_weights(weight_matrix, weights, weight_addr, load_weight);
+        set_weights(weight_matrix, weights, weight_address, load_weight);
         multiply_matrix(data_matrix, enable, start, data_in);
 
         wait for CLK_PERIOD * 10;

@@ -20,7 +20,7 @@ entity PE is
         accum_in : in std_logic_vector((ACCUM_IN_WIDTH - 1) downto 0);
         accum_out : out std_logic_vector((ACCUM_OUT_WIDTH - 1) downto 0);
         weight : in std_logic_vector((WEIGHT_WIDTH - 1) downto 0);
-        load_weight : in std_logic
+        weight_enable : in std_logic
     );
 end entity PE;
 
@@ -34,7 +34,7 @@ begin
     process(clk)
     begin
         if rising_edge(clk) then
-            if load_weight = '1' then
+            if weight_enable = '1' then
                 weight_reg <= weight;
             end if;
         end if;

@@ -10,15 +10,16 @@ entity systolic_array is
     port (
         clk : in std_logic;
 
-        -- Data interface
         enable : in std_logic;
+
+        -- Data interface
         data_in : in data_array;
-        data_out : out output_vector_t;
+        data_out : out output_array;
         
         -- Weight interface
-        weights : in weight_array;
-        weight_addr : in natural range 0 to (SIZE - 1);
-        load_weights : in std_logic
+        weight_in : in weight_array;
+        weight_address : in natural range 0 to (SIZE - 1);
+        weight_enable : in std_logic
     );
 end entity systolic_array;
 
@@ -29,13 +30,13 @@ architecture behave of systolic_array is
     signal data : data_matrix_t;
     signal accum : accum_matrix_t;
 
-    signal load_weight : std_logic_vector(0 to (SIZE - 1));
+    signal weight_enables : std_logic_vector(0 to (SIZE - 1));
 
 begin
 
     -- Enable signal for loading weights
     load_weight_gen : for i in 0 to (SIZE - 1) generate
-        load_weight(i) <= '0' when i /= weight_addr else load_weights;
+        weight_enables(i) <= '0' when i /= weight_address else weight_enable;
     end generate;
 
     -- Instantiate matrix of processing elements
@@ -55,8 +56,8 @@ begin
                         data_out => data(x, y),
                         accum_in => (others => '0'),
                         accum_out => accum(x, y)(get_accum_width(x) - 1 downto 0),
-                        load_weight => load_weight(x),
-                        weight => weights(y)
+                        weight_enable => weight_enables(x),
+                        weight => weight_in(y)
                     );
             end generate;
 
@@ -74,8 +75,8 @@ begin
                         data_out => data(x, y),
                         accum_in => (others => '0'),
                         accum_out => accum(x, y)(get_accum_width(x) - 1 downto 0),
-                        load_weight => load_weight(x),
-                        weight => weights(y)
+                        weight_enable => weight_enables(x),
+                        weight => weight_in(y)
                     );
             end generate;
 
@@ -93,8 +94,8 @@ begin
                         data_out => data(x, y),
                         accum_in => accum(x - 1, y)(get_accum_width(x - 1) - 1 downto 0),
                         accum_out => accum(x, y)(get_accum_width(x) - 1 downto 0),
-                        load_weight => load_weight(x),
-                        weight => weights(y)
+                        weight_enable => weight_enables(x),
+                        weight => weight_in(y)
                     );
             end generate;
 
@@ -112,8 +113,8 @@ begin
                         data_out => data(x, y),
                         accum_in => accum(x - 1, y)(get_accum_width(x - 1) - 1 downto 0),
                         accum_out => accum(x, y)(get_accum_width(x) - 1 downto 0),
-                        load_weight => load_weight(x),
-                        weight => weights(y)
+                        weight_enable => weight_enables(x),
+                        weight => weight_in(y)
                     );
             end generate;
         end generate;

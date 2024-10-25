@@ -38,7 +38,7 @@ end entity unified_buffer;
 architecture behave of unified_buffer is
 
     type RAM_t is array(0 to (DEPTH - 1)) of std_logic_vector((DATA_WIDTH * WIDTH) - 1 downto 0);
-    shared variable RAM : RAM_t := (others => (others => '0'));
+    shared variable RAM : RAM_t;
 
     signal enable_0: std_logic;
     signal enable_1 : std_logic;
