@@ -19,9 +19,9 @@ architecture behave of systolic_array_tb is
     signal data_in : data_array := (others => (others => '0'));
     signal data_out : output_array := (others => (others => '0'));
 
-    signal weights : weight_array := (others => (others => '0'));
+    signal weight_in : weight_array := (others => (others => '0'));
     signal weight_address : natural range 0 to (SIZE - 1) := 0;
-    signal load_weight : std_logic := '0';
+    signal weight_enable : std_logic := '0';
 
     type matrix_t is array (0 to (SIZE - 1), 0 to (SIZE - 1)) of natural;
     signal data_matrix : matrix_t;
@@ -51,20 +51,20 @@ architecture behave of systolic_array_tb is
 
     procedure set_weights(
         constant weight_matrix : in matrix_t;
-        signal weights : out weight_array;
-        signal weight_addr : out natural range 0 to (SIZE - 1);
-        signal load_weight : out std_logic
+        signal weight_in : out weight_array;
+        signal weight_address : out natural range 0 to (SIZE - 1);
+        signal weight_enable : out std_logic
     ) is
     begin
-        load_weight <= '1';
+        weight_enable <= '1';
         for i in 0 to (SIZE - 1) loop
             for j in 0 to (SIZE - 1) loop
-                weights(j) <= std_logic_vector(to_unsigned(weight_matrix(i, j), WEIGHT_WIDTH));
+                weight_in(j) <= std_logic_vector(to_unsigned(weight_matrix(i, j), WEIGHT_WIDTH));
             end loop;
-            weight_addr <= i;
+                weight_address <= i;
             wait for CLK_PERIOD;
         end loop;
-        load_weight <= '0';
+            weight_enable <= '0';
     end procedure;
 
     procedure multiply_matrix(
@@ -101,9 +101,9 @@ begin
             enable => enable,
             data_in => data_in,
             data_out => data_out,
-            weights => weights,
+            weight_in => weight_in,
             weight_address => weight_address,
-            load_weights => load_weight
+            weight_enable => weight_enable
         );
 
     clk <= not clk after CLK_PERIOD / 2;
@@ -137,7 +137,7 @@ begin
         wait for CLK_PERIOD * 2;
 
         calculate_expected_matrix(data_matrix, weight_matrix, expected_matrix);
-        set_weights(weight_matrix, weights, weight_address, load_weight);
+        set_weights(weight_matrix, weight_in, weight_address, weight_enable);
         multiply_matrix(data_matrix, enable, start, data_in);
 
         wait for CLK_PERIOD * 10;

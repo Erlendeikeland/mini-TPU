@@ -11,7 +11,7 @@ end entity tpu_tb;
 architecture behave of tpu_tb is
 
     constant CLK_PERIOD : time := 10 ns;
-    signal clk : std_logic := '0';
+    signal clk : std_logic := '1';
     signal reset : std_logic := '0';
 
 begin

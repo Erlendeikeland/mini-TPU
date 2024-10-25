@@ -56,10 +56,10 @@ begin
         port map(
             clk => clk,
             reset => reset,
-            write_en => write_en,
+            write_enable => write_en,
             write_data => write_data,
             full => full,
-            read_en => read_en,
+            read_enable => read_en,
             read_data => read_data,
             empty => empty
         );

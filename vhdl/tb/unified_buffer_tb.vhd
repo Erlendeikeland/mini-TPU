@@ -13,8 +13,6 @@ architecture behave of unified_buffer_tb is
     constant CLK_PERIOD : time := 10 ns;
     signal clk : std_logic := '1';
 
-    signal reset : std_logic := '0';
-
     constant WIDTH : natural := 8;
     constant DEPTH : natural := 8;
 
@@ -59,14 +57,6 @@ begin
         );
 
     clk <= not clk after CLK_PERIOD / 2;
-
-    process
-    begin
-        reset <= '1';
-        wait for CLK_PERIOD;
-        reset <= '0';
-        wait;
-    end process;
 
     process
         variable write_data : data_array := (others => (others => '0'));
