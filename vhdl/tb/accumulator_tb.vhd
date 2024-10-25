@@ -19,9 +19,9 @@ architecture behave of accumulator_tb is
     signal accumulate : std_logic := '0';
     signal write_address : natural := 0;
     signal write_enable : std_logic := '0';
-    signal write_data : data_array := (others => (others => '0'));
+    signal write_data : output_array := (others => (others => '0'));
     signal read_address : natural := 0;
-    signal read_data : data_array := (others => (others => '0'));
+    signal read_data : output_array := (others => (others => '0'));
 
 begin
 
@@ -51,7 +51,7 @@ begin
         for i in 0 to (WIDTH - 1) loop
             write_address <= i;
             for j in 0 to (WIDTH - 1) loop
-                write_data(j) <= std_logic_vector(to_unsigned(i + 1, DATA_WIDTH));
+                write_data(j) <= std_logic_vector(to_unsigned(i + 1, MAX_ACCUM_WIDTH));
             end loop;
             wait for CLK_PERIOD;
         end loop;
@@ -64,7 +64,7 @@ begin
             read_address <= i;
             wait for CLK_PERIOD * 2;
             for j in 0 to (WIDTH - 1) loop
-                assert read_data(j) = std_logic_vector(to_unsigned(i + 1, DATA_WIDTH)) report "Mismatch at read_data(" & integer'image(j) & ")" severity error;
+                assert read_data(j) = std_logic_vector(to_unsigned(i + 1, MAX_ACCUM_WIDTH)) report "Mismatch at read_data(" & integer'image(j) & ")" severity error;
             end loop;
         end loop;
             
@@ -76,7 +76,7 @@ begin
         for i in 0 to (WIDTH - 1) loop
             write_address <= i;
             for j in 0 to (WIDTH - 1) loop
-                write_data(j) <= std_logic_vector(to_unsigned(i + 1, DATA_WIDTH));
+                write_data(j) <= std_logic_vector(to_unsigned(i + 1, MAX_ACCUM_WIDTH));
             end loop;
             wait for CLK_PERIOD;
         end loop;
@@ -90,7 +90,7 @@ begin
             read_address <= i;
             wait for CLK_PERIOD * 2;
             for j in 0 to (WIDTH - 1) loop
-                assert read_data(j) = std_logic_vector(to_unsigned((i + 1) + (i + 1), DATA_WIDTH)) report "Mismatch at read_data(" & integer'image(j) & ")" severity error;
+                assert read_data(j) = std_logic_vector(to_unsigned((i + 1) + (i + 1), MAX_ACCUM_WIDTH)) report "Mismatch at read_data(" & integer'image(j) & ")" severity error;
             end loop;
         end loop;
         

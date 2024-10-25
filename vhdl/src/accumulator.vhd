@@ -17,17 +17,17 @@ entity accumulator is
         -- Write port
         write_address : in natural range 0 to (DEPTH - 1);
         write_enable : in std_logic;
-        write_data : in data_array;
+        write_data : in output_array;
 
         -- Read port
         read_address : in natural range 0 to (DEPTH - 1);
-        read_data : out data_array
+        read_data : out output_array
     );
 end entity accumulator;
 
 architecture behave of accumulator is
 
-    type RAM_t is array(0 to (DEPTH - 1)) of std_logic_vector((DATA_WIDTH * WIDTH) - 1 downto 0);
+    type RAM_t is array(0 to (DEPTH - 1)) of std_logic_vector((MAX_ACCUM_WIDTH * WIDTH) - 1 downto 0);
     shared variable RAM : RAM_t;
 
 begin
@@ -38,17 +38,19 @@ begin
             if write_enable = '1' then
                 if accumulate = '1' then
                     for i in 0 to (WIDTH - 1) loop
-                        RAM(write_address)(i * DATA_WIDTH + (DATA_WIDTH - 1) downto i * DATA_WIDTH) := std_logic_vector(unsigned(RAM(write_address)(i * DATA_WIDTH + (DATA_WIDTH - 1) downto i * DATA_WIDTH)) + unsigned(write_data(i)));
+                        RAM(write_address)(i * MAX_ACCUM_WIDTH + (MAX_ACCUM_WIDTH - 1) downto i * MAX_ACCUM_WIDTH) := std_logic_vector(unsigned(RAM(write_address)(i * MAX_ACCUM_WIDTH + (MAX_ACCUM_WIDTH - 1) downto i * MAX_ACCUM_WIDTH)) + unsigned(write_data(i)));
                     end loop;
                 else
                     for i in 0 to (WIDTH - 1) loop
-                        RAM(write_address)(i * DATA_WIDTH + (DATA_WIDTH - 1) downto i * DATA_WIDTH) := write_data(i);
+                        RAM(write_address)(i * MAX_ACCUM_WIDTH + (MAX_ACCUM_WIDTH - 1) downto i * MAX_ACCUM_WIDTH) := write_data(i);
+                        report_line("Write data: " & to_hstring(write_data(i)));
                     end loop;
+                    report_line("");
                 end if;
             end if;
 
             for i in 0 to (WIDTH - 1) loop
-                read_data(i) <= RAM(read_address)(i * DATA_WIDTH + (DATA_WIDTH - 1) downto i * DATA_WIDTH);
+                read_data(i) <= RAM(read_address)(i * MAX_ACCUM_WIDTH + (MAX_ACCUM_WIDTH - 1) downto i * MAX_ACCUM_WIDTH);
             end loop;
         end if;
     end process;

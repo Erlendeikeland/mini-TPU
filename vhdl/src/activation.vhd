@@ -4,6 +4,9 @@ use ieee.std_logic_1164.all;
 use work.minitpu_pkg.all;
 
 entity activation is
+    generic (
+        WIDTH : natural
+    );
     port (
         clk : in std_logic;
 
@@ -16,7 +19,7 @@ architecture rtl of activation is
 
 begin
 
-    output_gen : for i in 0 to (DATA_WIDTH - 1) generate
+    output_gen : for i in 0 to (WIDTH - 1) generate
         data_out(i) <= data_in(i)((DATA_WIDTH - 1) downto 0);
     end generate;
 

@@ -24,7 +24,7 @@ package minitpu_pkg is
     subtype op_t is std_logic_vector(7 downto 0);            
 
 
-    constant MAX_ACCUM_WIDTH : natural := 19;
+    constant MAX_ACCUM_WIDTH : natural := 18;
 
     type output_array is array(0 to (SIZE - 1)) of std_logic_vector((MAX_ACCUM_WIDTH - 1) downto 0);
 
