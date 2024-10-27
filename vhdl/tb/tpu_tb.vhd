@@ -91,7 +91,7 @@ begin
         for i in 0 to (SIZE - 1) loop
             weight_buffer_port_0_write_address <= i;
             for j in 0 to (SIZE - 1) loop
-                weight_buffer_port_0_write_data(j) <= std_logic_vector(to_unsigned(i + 1, WEIGHT_WIDTH));
+                weight_buffer_port_0_write_data(j) <= std_logic_vector(to_unsigned(i + j, DATA_WIDTH));
             end loop;
             WAIT FOR CLK_PERIOD;
         end loop;
@@ -106,7 +106,7 @@ begin
         for i in 0 to (SIZE - 1) loop
             unified_buffer_master_write_address <= i;
             for j in 0 to (SIZE - 1) loop
-                unified_buffer_master_write_data(j) <= std_logic_vector(to_unsigned(i + 1, DATA_WIDTH));
+                unified_buffer_master_write_data(j) <= std_logic_vector(to_unsigned(i + j, DATA_WIDTH));
             end loop;
             WAIT FOR CLK_PERIOD;
         end loop;
@@ -146,6 +146,30 @@ begin
             accumulator_write_address <= i;
             wait for CLK_PERIOD;
         end loop;
+        accumulator_write_enable <= '0';
+
+        wait for CLK_PERIOD * 5;
+        
+        -- Read data from accumulator into unified buffer
+        unified_buffer_port_0_enable <= '1';
+        for i in 0 to (SIZE - 1) loop
+            accumulator_read_address <= i;
+            wait for CLK_PERIOD;
+            unified_buffer_port_0_write_enable <= '1';
+            unified_buffer_port_0_write_address <= SIZE + i;
+        end loop;
+        unified_buffer_port_0_enable <= '1';
+            
+        wait for CLK_PERIOD * 5;
+
+        -- Read data from unified buffer
+        unified_buffer_master_enable <= '1';
+        for i in 0 to (SIZE - 1) loop
+            unified_buffer_master_read_address <= SIZE + i;
+            wait for CLK_PERIOD * 2;
+            report_line(to_string(to_integer(unsigned(unified_buffer_master_read_data(0)))) & " " & to_string(to_integer(unsigned(unified_buffer_master_read_data(1)))) & " " & to_string(to_integer(unsigned(unified_buffer_master_read_data(2)))) & " " & to_string(to_integer(unsigned(unified_buffer_master_read_data(3)))));
+        end loop;
+        unified_buffer_master_enable <= '0';
 
         wait for CLK_PERIOD * 5;
 

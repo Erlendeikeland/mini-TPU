@@ -43,25 +43,23 @@ architecture behave of unified_buffer is
     signal enable_0: std_logic;
     signal enable_1 : std_logic;
 
+    signal address_0 : natural range 0 to (DEPTH - 1);
+    signal address_1 : natural range 0 to (DEPTH - 1);
+
 begin
 
-    enable_0 <= '0' when master_enable = '1' else port_0_enable;
-    enable_1 <= '0' when master_enable = '1' else port_1_enable;
-
-    -- Master (Read/Write)
-    process (clk)
+    process (all)
     begin
-        if rising_edge(clk) then
-            if master_enable = '1' then
-                if master_write_enable = '1' then
-                    for i in 0 to (WIDTH - 1) loop
-                        RAM(master_write_address)(i * DATA_WIDTH + (DATA_WIDTH - 1) downto i * DATA_WIDTH) := master_write_data(i);
-                    end loop;
-                end if;
-                for i in 0 to (WIDTH - 1) loop
-                    master_read_data(i) <= RAM(master_read_address)(i * DATA_WIDTH + (DATA_WIDTH - 1) downto i * DATA_WIDTH);
-                end loop;
-            end if;
+        if master_enable = '1' then
+            enable_0 <= '1';
+            enable_1 <= '1';
+            address_0 <= master_write_address;
+            address_1 <= master_read_address;
+        else
+            enable_0 <= port_0_enable;
+            enable_1 <= port_1_enable;
+            address_0 <= port_0_write_address;
+            address_1 <= port_1_read_address;
         end if;
     end process;
 
@@ -72,9 +70,12 @@ begin
             if enable_0 = '1' then
                 if port_0_write_enable = '1' then
                     for i in 0 to (WIDTH - 1) loop
-                        ram(port_0_write_address)(i * DATA_WIDTH + (DATA_WIDTH - 1) downto i * DATA_WIDTH) := port_0_write_data(i);
+                        RAM(address_0)(i * DATA_WIDTH + (DATA_WIDTH - 1) downto i * DATA_WIDTH) := port_0_write_data(i);
                     end loop;
-                end if;            
+                end if;
+                for i in 0 to (WIDTH - 1) loop
+                    master_read_data(i) <= RAM(address_1)(i * DATA_WIDTH + (DATA_WIDTH - 1) downto i * DATA_WIDTH);
+                end loop;
             end if;
         end if;
     end process;
@@ -84,9 +85,14 @@ begin
     begin
         if rising_edge(clk) then
             if enable_1 = '1' then
+                if master_write_enable = '1' then
+                    for i in 0 to (WIDTH - 1) loop
+                        RAM(address_0)(i * DATA_WIDTH + (DATA_WIDTH - 1) downto i * DATA_WIDTH) := master_write_data(i);
+                    end loop;
+                end if;
                 for i in 0 to (WIDTH - 1) loop
-                    port_1_read_data(i) <= ram(port_1_read_address)(i * DATA_WIDTH + (DATA_WIDTH - 1) downto i * DATA_WIDTH);
-                end loop;    
+                    port_1_read_data(i) <= RAM(address_1)(i * DATA_WIDTH + (DATA_WIDTH - 1) downto i * DATA_WIDTH);
+                end loop;
             end if;
         end if;
     end process;

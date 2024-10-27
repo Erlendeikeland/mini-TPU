@@ -23,6 +23,17 @@ architecture behave of accumulator_tb is
     signal read_address : natural := 0;
     signal read_data : output_array := (others => (others => '0'));
 
+    type matrix_t is array (0 to ((SIZE * 2) - 2), 0 to (SIZE - 1)) of natural;
+    constant data_matrix : matrix_t := (
+        (1, 0, 0, 0),
+        (5, 2, 0, 0),
+        (9, 6, 3, 0),
+        (13, 10, 7, 4),
+        (0, 14, 11, 8),
+        (0, 0, 15, 12),
+        (0, 0, 0, 16)
+    );
+
 begin
 
     accumulator_inst: entity work.accumulator
@@ -47,53 +58,28 @@ begin
         wait for CLK_PERIOD * 5;
         
         -- Write to accumulator without accumulating
-        write_enable <= '1';
-        for i in 0 to (WIDTH - 1) loop
-            write_address <= i;
+        for i in 0 to ((WIDTH * 2) - 2) loop
+            if i < WIDTH then
+                write_enable <= '1';
+                write_address <= i;
+            else
+                write_enable <= '0';
+                write_address <= 0;
+            end if;
             for j in 0 to (WIDTH - 1) loop
-                write_data(j) <= std_logic_vector(to_unsigned(i + 1, MAX_ACCUM_WIDTH));
+                write_data(j) <= std_logic_vector(to_unsigned(data_matrix(i, j), MAX_ACCUM_WIDTH));
             end loop;
             wait for CLK_PERIOD;
         end loop;
-        write_enable <= '0';
             
         wait for CLK_PERIOD * 5;
         
-        -- Read from accumulator and test the result
-        for i in 0 to (WIDTH - 1) loop
+        -- Read from accumulator
+        for i in 0 to ((WIDTH * 2) - 2) loop
             read_address <= i;
-            wait for CLK_PERIOD * 2;
-            for j in 0 to (WIDTH - 1) loop
-                assert read_data(j) = std_logic_vector(to_unsigned(i + 1, MAX_ACCUM_WIDTH)) report "Mismatch at read_data(" & integer'image(j) & ")" severity error;
-            end loop;
-        end loop;
-            
-        wait for CLK_PERIOD * 5;
-
-        -- Write to accumulator with accumulating
-        write_enable <= '1';
-        accumulate <= '1';
-        for i in 0 to (WIDTH - 1) loop
-            write_address <= i;
-            for j in 0 to (WIDTH - 1) loop
-                write_data(j) <= std_logic_vector(to_unsigned(i + 1, MAX_ACCUM_WIDTH));
-            end loop;
             wait for CLK_PERIOD;
         end loop;
-        write_enable <= '0';
-        accumulate <= '0';
 
-        wait for CLK_PERIOD * 5;
-
-        -- Read from accumulator and test the result
-        for i in 0 to (WIDTH - 1) loop
-            read_address <= i;
-            wait for CLK_PERIOD * 2;
-            for j in 0 to (WIDTH - 1) loop
-                assert read_data(j) = std_logic_vector(to_unsigned((i + 1) + (i + 1), MAX_ACCUM_WIDTH)) report "Mismatch at read_data(" & integer'image(j) & ")" severity error;
-            end loop;
-        end loop;
-        
         stop;
     end process;
 

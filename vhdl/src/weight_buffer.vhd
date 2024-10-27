@@ -41,9 +41,9 @@ begin
             if port_0_enable = '1' then
                 if port_0_write_enable = '1' then
                     for i in 0 to (WIDTH - 1) loop
-                        ram(port_0_write_address)(i * DATA_WIDTH + (DATA_WIDTH - 1) downto i * DATA_WIDTH) := port_0_write_data(i);
+                        RAM(port_0_write_address)(i * DATA_WIDTH + (DATA_WIDTH - 1) downto i * DATA_WIDTH) := port_0_write_data(i);
                     end loop;
-                end if;            
+                end if;
             end if;
         end if;
     end process;
@@ -54,8 +54,8 @@ begin
         if rising_edge(clk) then
             if port_1_enable = '1' then
                 for i in 0 to (WIDTH - 1) loop
-                    port_1_read_data(i) <= ram(port_1_read_address)(i * DATA_WIDTH + (DATA_WIDTH - 1) downto i * DATA_WIDTH);
-                end loop;    
+                    port_1_read_data(i) <= RAM(port_1_read_address)(i * DATA_WIDTH + (DATA_WIDTH - 1) downto i * DATA_WIDTH);
+                end loop;
             end if;
         end if;
     end process;

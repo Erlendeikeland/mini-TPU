@@ -1,29 +1,39 @@
-matrix_a = [
-    [1, 1, 1, 1],
-    [2, 2, 2, 2],
-    [3, 3, 3, 3],
-    [4, 4, 4, 4]
-]
-
-matrix_b = [
-    [1, 1, 1, 1],
-    [2, 2, 2, 2],
-    [3, 3, 3, 3],
-    [4, 4, 4, 4]
-]
+import numpy as np
 
 
-def matrix_multiplication(matrix_a, matrix_b):
-    result = [[0 for _ in range(len(matrix_b[0]))] for _ in range(len(matrix_a))]
-    for i in range(len(matrix_a)):
-        for j in range(len(matrix_b[0])):
-            for k in range(len(matrix_b)):
-                result[i][j] += matrix_a[i][k] * matrix_b[k][j]
+
+
+
+def matrix_multiplication(matrix1, matrix2):
+    result = [[0 for _ in range(len(matrix2[0]))] for _ in range(len(matrix1))]
+    for i in range(len(matrix1)):
+        for j in range(len(matrix2[0])):
+            for k in range(len(matrix2)):
+                result[i][j] += matrix1[i][k] * matrix2[k][j]
     return result
 
 
-result = matrix_multiplication(matrix_a, matrix_b)
 
-for row in result:
+
+def get_test_matrix(matrix, SIZE):    
+    height = (SIZE * 2) - 1
+    result = [["0" for _ in range(SIZE)] for _ in range(height)]
+    for i in range(SIZE):
+        for j in range(SIZE):
+            row = i + j
+            col = j
+            result[row][col] = str(matrix[i][j])
+    return result
+
+
+
+
+SIZE = 4
+matrix = np.array([[0 for _ in range(SIZE)] for _ in range(SIZE)])
+
+for i in range(SIZE):
+    for j in range(SIZE):
+        matrix[i][j] = i + j
+
+for row in matrix_multiplication(matrix, matrix):
     print(row)
-
