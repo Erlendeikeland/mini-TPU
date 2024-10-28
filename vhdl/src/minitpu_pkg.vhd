@@ -17,11 +17,19 @@ package minitpu_pkg is
     -- Weight interface
     constant WEIGHT_WIDTH : natural := 8;
     type weight_array is array(0 to (SIZE - 1)) of std_logic_vector((WEIGHT_WIDTH - 1) downto 0);
-    
 
+    type op_code_t is (
+        NOP,
+        MATRIX_MULTIPLY,
+        LOAD_WEIGHTS
+    );
 
-    -- FIFO
-    subtype op_t is std_logic_vector(7 downto 0);            
+    type op_t is record
+        op_code : op_code_t;
+        unified_buffer_address : natural;
+        weight_buffer_address : natural;
+        accumulator_address : natural;
+    end record;
 
 
     constant MAX_ACCUM_WIDTH : natural := 18;
