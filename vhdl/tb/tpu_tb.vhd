@@ -53,6 +53,7 @@ begin
 
     process
     begin
+        wait for CLK_PERIOD;
         reset <= '0';
         wait for CLK_PERIOD;
         reset <= '1';
@@ -93,21 +94,6 @@ begin
 
         wait for CLK_PERIOD * 5;
 
-        -- Write data to unified buffer
-        unified_buffer_master_enable <= '1';
-        unified_buffer_master_write_enable <= '1';
-        for i in 0 to (SIZE - 1) loop
-            unified_buffer_master_write_address <= i + 4;
-            for j in 0 to (SIZE - 1) loop
-                unified_buffer_master_write_data(j) <= std_logic_vector(to_unsigned(i + j + 4, DATA_WIDTH));
-            end loop;
-            WAIT FOR CLK_PERIOD;
-        end loop;
-        unified_buffer_master_enable <= '0';
-        unified_buffer_master_write_enable <= '0';
-
-        wait for CLK_PERIOD * 5;
-
         -- Write instructions to FIFO
         fifo_write_enable <= '1';
         fifo_write_data.op_code <= LOAD_WEIGHTS;
@@ -117,28 +103,7 @@ begin
         wait for CLK_PERIOD;
         fifo_write_enable <= '0';
 
-        --wait for CLK_PERIOD * 5;
-
-        fifo_write_enable <= '1';
-        fifo_write_data.op_code <= MATRIX_MULTIPLY;
-        fifo_write_data.unified_buffer_address <= 0;
-        fifo_write_data.weight_buffer_address <= 0;
-        fifo_write_data.accumulator_address <= 0;
-        wait for CLK_PERIOD;
-        fifo_write_enable <= '0';
-
-        --wait for CLK_PERIOD * 5;
-
-        fifo_write_enable <= '1';
-        fifo_write_data.op_code <= MATRIX_MULTIPLY;
-        fifo_write_data.unified_buffer_address <= 4;
-        fifo_write_data.weight_buffer_address <= 0;
-        fifo_write_data.accumulator_address <= 4;
-        wait for CLK_PERIOD;
-        fifo_write_enable <= '0';
-
-        wait for CLK_PERIOD * 40;
-
+        wait for CLK_PERIOD * 60;
         stop;
     end process;
 
