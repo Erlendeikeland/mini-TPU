@@ -50,7 +50,13 @@ begin
                     if counter < SIZE then
                         counter <= counter + 1;
                     else
-                        state <= IDLE;
+                        if op_enable = '1' then
+                            state <= LOAD;
+                            current_address <= op_address;
+                            counter <= 0;
+                        else
+                            state <= IDLE;
+                        end if;
                     end if;
             
                 when others =>

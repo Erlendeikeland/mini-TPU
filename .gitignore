@@ -3,5 +3,6 @@
 *.ini
 *.wlf
 /vivado
+/ip_repo
 /vhdl/wlf*
 transcript

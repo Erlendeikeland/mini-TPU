@@ -54,8 +54,7 @@ architecture behave of tpu is
     signal accumulator_write_enable : std_logic;
     signal accumulator_read_address : natural;
     signal accumulator_read_data : output_array;
-
-    signal activation_data_out : data_array;
+    signal accumulator_read_data_cropped : data_array;
 
 begin
 
@@ -129,7 +128,7 @@ begin
             port_0_enable => unified_buffer_port_0_enable,
             port_0_write_address => unified_buffer_port_0_write_address,
             port_0_write_enable => unified_buffer_port_0_write_enable,
-            port_0_write_data => activation_data_out, --
+            port_0_write_data => accumulator_read_data_cropped, --
             port_1_enable => unified_buffer_port_1_enable,
             port_1_read_address => unified_buffer_port_1_read_address,
             port_1_read_data => unified_buffer_port_1_read_data --
@@ -171,14 +170,11 @@ begin
             read_data => accumulator_read_data --
         );
 
-    activation_inst: entity work.activation
-        generic map(
-            WIDTH => 4
-        )
-        port map(
-            clk => clk,
-            data_in => accumulator_read_data, --
-            data_out => activation_data_out --
-        );
+    process (all)
+    begin
+        for i in 0 to (SIZE - 1) loop
+            accumulator_read_data_cropped(i) <= accumulator_read_data(i)((DATA_WIDTH - 1) downto 0);
+        end loop;
+    end process;
 
 end architecture;

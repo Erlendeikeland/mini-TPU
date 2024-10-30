@@ -72,7 +72,7 @@ begin
             for j in 0 to (SIZE - 1) loop
                 weight_buffer_port_0_write_data(j) <= std_logic_vector(to_unsigned(i + j, DATA_WIDTH));
             end loop;
-            WAIT FOR CLK_PERIOD;
+            wait for CLK_PERIOD;
         end loop;
         weight_buffer_port_0_enable <= '0';
         weight_buffer_port_0_write_enable <= '1';
@@ -87,7 +87,7 @@ begin
             for j in 0 to (SIZE - 1) loop
                 unified_buffer_master_write_data(j) <= std_logic_vector(to_unsigned(i + j, DATA_WIDTH));
             end loop;
-            WAIT FOR CLK_PERIOD;
+            wait for CLK_PERIOD;
         end loop;
         unified_buffer_master_enable <= '0';
         unified_buffer_master_write_enable <= '0';
@@ -103,7 +103,29 @@ begin
         wait for CLK_PERIOD;
         fifo_write_enable <= '0';
 
+        wait for CLK_PERIOD * 10;
+
+        fifo_write_enable <= '1';
+        fifo_write_data.op_code <= MATRIX_MULTIPLY;
+        fifo_write_data.unified_buffer_address <= 0;
+        fifo_write_data.weight_buffer_address <= 0;
+        fifo_write_data.accumulator_address <= 4;
+        wait for CLK_PERIOD;
+        fifo_write_enable <= '0';
+
         wait for CLK_PERIOD * 60;
+
+        -- Read data from unified buffer
+        unified_buffer_master_enable <= '1';
+        for i in 0 to (SIZE - 1) loop
+            unified_buffer_master_read_address <= i + 4;
+            wait for CLK_PERIOD * 2;
+            report_line(integer'image(to_integer(unsigned(unified_buffer_master_read_data(0)))) & " " & integer'image(to_integer(unsigned(unified_buffer_master_read_data(1)))) & " " & integer'image(to_integer(unsigned(unified_buffer_master_read_data(2)))) & " " & integer'image(to_integer(unsigned(unified_buffer_master_read_data(3)))));
+        end loop;
+        unified_buffer_master_enable <= '0';
+
+        wait for CLK_PERIOD * 5; 
+
         stop;
     end process;
 

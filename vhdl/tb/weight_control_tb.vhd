@@ -55,7 +55,14 @@ begin
         op_enable <= '1';
         op_address <= 2;
         wait for CLK_PERIOD;
-        op_address <= 3;
+        op_enable <= '0';
+
+        wait for CLK_PERIOD * 10;
+
+        op_enable <= '1';
+        op_address <= 10;
+        wait for CLK_PERIOD;
+        op_address <= 0;
         
         wait for CLK_PERIOD * 60;
         stop;

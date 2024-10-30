@@ -2,7 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity miniTPU_v1_0_S_AXIS is
+entity test_v1_0_S00_AXIS is
 	generic (
 		-- Users to add parameters here
 
@@ -33,9 +33,9 @@ entity miniTPU_v1_0_S_AXIS is
 		-- Data is in valid
 		S_AXIS_TVALID	: in std_logic
 	);
-end miniTPU_v1_0_S_AXIS;
+end test_v1_0_S00_AXIS;
 
-architecture arch_imp of miniTPU_v1_0_S_AXIS is
+architecture arch_imp of test_v1_0_S00_AXIS is
 	-- function called clogb2 that returns an integer which has the 
 	-- value of the ceiling of the log base 2.
 	function clogb2 (bit_depth : integer) return integer is 

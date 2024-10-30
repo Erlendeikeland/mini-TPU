@@ -3,31 +3,34 @@ use ieee.std_logic_1164.all;
 
 use work.minitpu_pkg.all;
 
-entity systolic_control is
+entity accumulator_control is
     port (
         clk : in std_logic;
         reset : in std_logic;
         
-        op_unified_buffer_address : in natural;
+        op_accumulator_address : in natural;
         op_enable : in std_logic;
 
         busy : out std_logic;
 
-        unified_buffer_enable : out std_logic;
-        unified_buffer_read_address : out natural
+        accumulator_accumulate : out std_logic;
+        accumulator_write_address : out natural;
+        accumulator_write_enable : out std_logic
     );
-end entity systolic_control;
+end entity accumulator_control;
 
-architecture rtl of systolic_control is
+architecture rtl of accumulator_control is
 
     type state_t is (IDLE, LOAD);
     signal state : state_t;
     
     signal counter : natural;
-    
-    signal current_unified_buffer_address : natural;
+        
+    signal current_accumulator_address : natural;
 
 begin
+
+    accumulator_accumulate <= '0';
 
     process (clk, reset)
     begin
@@ -38,7 +41,7 @@ begin
                 when IDLE =>
                     if op_enable = '1' then
                         state <= LOAD;
-                        current_unified_buffer_address <= op_unified_buffer_address;
+                        current_accumulator_address <= op_accumulator_address;
                         counter <= 0;
                     end if;
 
@@ -48,7 +51,7 @@ begin
                     else
                         if op_enable = '1' then
                             state <= LOAD;
-                            current_unified_buffer_address <= op_unified_buffer_address;
+                            current_accumulator_address <= op_accumulator_address;
                             counter <= 0;
                         else
                             state <= IDLE;
@@ -63,7 +66,7 @@ begin
 
     busy <= '1' when op_enable = '1' or state = LOAD else '0';
 
-    unified_buffer_enable <= '1' when (state = LOAD) and (counter < SIZE) else '0';
-    unified_buffer_read_address <= current_unified_buffer_address + counter when (counter < SIZE);
+    accumulator_write_enable <= '1' when (state = LOAD) and (counter < SIZE - 1) else '0';
+    accumulator_write_address <= current_accumulator_address + counter when (counter < SIZE);
 
 end architecture;

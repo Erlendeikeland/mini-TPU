@@ -1,31 +1,32 @@
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
 use work.minitpu_pkg.all;
 
-entity systolic_control is
+entity activation_control is
     port (
         clk : in std_logic;
         reset : in std_logic;
-        
-        op_unified_buffer_address : in natural;
+
+        op_address : in natural;
         op_enable : in std_logic;
 
         busy : out std_logic;
 
-        unified_buffer_enable : out std_logic;
-        unified_buffer_read_address : out natural
+        weight_buffer_enable : out std_logic;
+        weight_buffer_read_address : out natural;
     );
-end entity systolic_control;
+end entity activation_control;
 
-architecture rtl of systolic_control is
+architecture rtl of activation_control is
 
     type state_t is (IDLE, LOAD);
     signal state : state_t;
-    
+
     signal counter : natural;
-    
-    signal current_unified_buffer_address : natural;
+
+    signal current_address : natural;
 
 begin
 
@@ -38,17 +39,17 @@ begin
                 when IDLE =>
                     if op_enable = '1' then
                         state <= LOAD;
-                        current_unified_buffer_address <= op_unified_buffer_address;
+                        current_address <= op_address;
                         counter <= 0;
                     end if;
 
                 when LOAD =>
-                    if counter < (SIZE - 1) then
+                    if counter < SIZE then
                         counter <= counter + 1;
                     else
                         if op_enable = '1' then
                             state <= LOAD;
-                            current_unified_buffer_address <= op_unified_buffer_address;
+                            current_address <= op_address;
                             counter <= 0;
                         else
                             state <= IDLE;
@@ -63,7 +64,10 @@ begin
 
     busy <= '1' when op_enable = '1' or state = LOAD else '0';
 
-    unified_buffer_enable <= '1' when (state = LOAD) and (counter < SIZE) else '0';
-    unified_buffer_read_address <= current_unified_buffer_address + counter when (counter < SIZE);
+    weight_buffer_enable <= '1' when (state = LOAD) and (counter < SIZE) else '0';
+    weight_buffer_read_address <= current_address + counter when (counter < SIZE);
+    
+    systolic_array_weight_enable <= '1' when (state = LOAD) and (counter > 0) and (counter < (SIZE + 1)) else '0';
+    systolic_array_weight_address <= counter - 1 when (counter > 0) and (counter < (SIZE + 1));
 
 end architecture;
