@@ -12,7 +12,7 @@ architecture behave of tpu_tb is
 
     constant CLK_PERIOD : time := 10 ns;
     signal clk : std_logic := '1';
-    signal reset : std_logic := '0';
+    signal reset : std_logic := '1';
 
     signal fifo_write_enable : std_logic := '0';
     signal fifo_write_data : op_t;
@@ -61,36 +61,55 @@ begin
     end process;
 
     process
+
+        procedure write_weight_buffer(
+            constant address : in natural;
+            constant value : in natural
+        ) is
+        begin
+            weight_buffer_port_0_enable <= '1';
+            weight_buffer_port_0_write_enable <= '1';
+            for i in 0 to (SIZE - 1) loop
+                weight_buffer_port_0_write_address <=  address + i;
+                for j in 0 to (SIZE - 1) loop
+                    weight_buffer_port_0_write_data(j) <= std_logic_vector(to_unsigned(value, DATA_WIDTH));
+                end loop;
+                wait for CLK_PERIOD;
+            end loop;
+            weight_buffer_port_0_enable <= '0';
+            weight_buffer_port_0_write_enable <= '0';
+        end procedure;
+
+        procedure write_unified_buffer(
+            constant address : in natural;
+            constant value : in natural
+        ) is
+        begin
+            unified_buffer_master_enable <= '1';
+            unified_buffer_master_write_enable <= '1';
+            for i in 0 to (SIZE - 1) loop
+                unified_buffer_master_write_address <= address + i;
+                for j in 0 to (SIZE - 1) loop
+                    unified_buffer_master_write_data(j) <= std_logic_vector(to_unsigned(value, DATA_WIDTH));
+                end loop;
+                wait for CLK_PERIOD;
+            end loop;
+            unified_buffer_master_enable <= '0';
+            unified_buffer_master_write_enable <= '0';
+        end procedure;
+
     begin
         wait for CLK_PERIOD * 5;
 
         -- Write data to weight buffer
-        weight_buffer_port_0_enable <= '1';
-        weight_buffer_port_0_write_enable <= '1';
-        for i in 0 to (SIZE - 1) loop
-            weight_buffer_port_0_write_address <= i + 2;
-            for j in 0 to (SIZE - 1) loop
-                weight_buffer_port_0_write_data(j) <= std_logic_vector(to_unsigned(i + j, DATA_WIDTH));
-            end loop;
-            wait for CLK_PERIOD;
-        end loop;
-        weight_buffer_port_0_enable <= '0';
-        weight_buffer_port_0_write_enable <= '1';
-        
+        write_weight_buffer(0, 1);
+        write_weight_buffer(SIZE, 2);
+
         wait for CLK_PERIOD * 5;
 
         -- Write data to unified buffer
-        unified_buffer_master_enable <= '1';
-        unified_buffer_master_write_enable <= '1';
-        for i in 0 to (SIZE - 1) loop
-            unified_buffer_master_write_address <= i;
-            for j in 0 to (SIZE - 1) loop
-                unified_buffer_master_write_data(j) <= std_logic_vector(to_unsigned(i + j, DATA_WIDTH));
-            end loop;
-            wait for CLK_PERIOD;
-        end loop;
-        unified_buffer_master_enable <= '0';
-        unified_buffer_master_write_enable <= '0';
+        write_unified_buffer(0, 1);
+        write_unified_buffer(SIZE, 2);
 
         wait for CLK_PERIOD * 5;
 
@@ -98,33 +117,81 @@ begin
         fifo_write_enable <= '1';
         fifo_write_data.op_code <= LOAD_WEIGHTS;
         fifo_write_data.unified_buffer_address <= 0;
-        fifo_write_data.weight_buffer_address <= 2;
+        fifo_write_data.weight_buffer_address <= 0;
         fifo_write_data.accumulator_address <= 0;
         wait for CLK_PERIOD;
         fifo_write_enable <= '0';
+        
+        fifo_write_enable <= '1';
+        fifo_write_data.op_code <= MATRIX_MULTIPLY;
+        fifo_write_data.unified_buffer_address <= 0;
+        fifo_write_data.weight_buffer_address <= 0;
+        fifo_write_data.accumulator_address <= SIZE * 2;
+        wait for CLK_PERIOD;
+        fifo_write_enable <= '0';
 
-        wait for CLK_PERIOD * 10;
+        fifo_write_enable <= '1';
+        fifo_write_data.op_code <= LOAD_WEIGHTS;
+        fifo_write_data.unified_buffer_address <= 0;
+        fifo_write_data.weight_buffer_address <= SIZE;
+        fifo_write_data.accumulator_address <= 0;
+        wait for CLK_PERIOD;
+        fifo_write_enable <= '0';
 
         fifo_write_enable <= '1';
         fifo_write_data.op_code <= MATRIX_MULTIPLY;
         fifo_write_data.unified_buffer_address <= 0;
         fifo_write_data.weight_buffer_address <= 0;
-        fifo_write_data.accumulator_address <= 4;
+        fifo_write_data.accumulator_address <= SIZE * 3;
         wait for CLK_PERIOD;
         fifo_write_enable <= '0';
 
-        wait for CLK_PERIOD * 60;
+        fifo_write_enable <= '1';
+        fifo_write_data.op_code <= MATRIX_MULTIPLY;
+        fifo_write_data.unified_buffer_address <= SIZE;
+        fifo_write_data.weight_buffer_address <= 0;
+        fifo_write_data.accumulator_address <= SIZE * 3;
+        wait for CLK_PERIOD;
+        fifo_write_enable <= '0';
+
+        wait for CLK_PERIOD * SIZE * SIZE * SIZE;
 
         -- Read data from unified buffer
         unified_buffer_master_enable <= '1';
         for i in 0 to (SIZE - 1) loop
-            unified_buffer_master_read_address <= i + 4;
+            unified_buffer_master_read_address <= i + SIZE * 2;
             wait for CLK_PERIOD * 2;
-            report_line(integer'image(to_integer(unsigned(unified_buffer_master_read_data(0)))) & " " & integer'image(to_integer(unsigned(unified_buffer_master_read_data(1)))) & " " & integer'image(to_integer(unsigned(unified_buffer_master_read_data(2)))) & " " & integer'image(to_integer(unsigned(unified_buffer_master_read_data(3)))));
+            report_array(unified_buffer_master_read_data);
         end loop;
         unified_buffer_master_enable <= '0';
 
-        wait for CLK_PERIOD * 5; 
+        report_line("");
+
+        wait for CLK_PERIOD * 5;
+        
+        -- Read data from unified buffer
+        unified_buffer_master_enable <= '1';
+        for i in 0 to (SIZE - 1) loop
+            unified_buffer_master_read_address <= i + SIZE * 3;
+            wait for CLK_PERIOD * 2;
+            report_array(unified_buffer_master_read_data);
+        end loop;
+        unified_buffer_master_enable <= '0';
+
+        report_line("");
+
+        wait for CLK_PERIOD * 5;
+
+        -- Read data from unified buffer
+        unified_buffer_master_enable <= '1';
+        for i in 0 to (SIZE - 1) loop
+            unified_buffer_master_read_address <= i;
+            wait for CLK_PERIOD * 2;
+            report_array(unified_buffer_master_read_data);
+        end loop;
+        unified_buffer_master_enable <= '0';
+
+        wait for CLK_PERIOD * 5;
 
         stop;
     end process;

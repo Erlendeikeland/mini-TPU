@@ -8,7 +8,6 @@ entity control is
         clk : in std_logic;
         reset : in std_logic;
 
-        fifo_full : in std_logic;
         fifo_empty : in std_logic;
         fifo_read_enable : out std_logic;
         fifo_read_data : in op_t;
@@ -37,10 +36,16 @@ architecture behave of control is
     type state_t is (IDLE, RUNNING);
     signal state : state_t;
 
-    signal count : natural range 0 to SIZE + 8;
-    signal count_limit : natural range 0 to SIZE + 8;
+    signal op_reg_0 : op_t;
+    signal op_reg_1 : op_t;
+    signal op_reg_2 : op_t;
 
-    signal current_op : op_t;
+    signal systolic_enable_shift : std_logic_vector((SIZE * 3) downto 0);
+    signal systolic_enable : std_logic;
+    signal weight_buffer_enable_shift : std_logic_vector((SIZE + 1) downto 0);
+    signal weight_buffer_enable : std_logic;
+
+    signal systolic_busy : std_logic;
 
 begin
 
@@ -49,64 +54,151 @@ begin
         if rising_edge(clk) then
             if reset = '0' then
                 state <= IDLE;
+                systolic_enable <= '0';
+                weight_buffer_enable <= '0';
+                fifo_read_enable <= '0';
             else
                 case state is
                     when IDLE =>
                         if fifo_empty = '0' then
-                            state <= RUNNING;
-                            fifo_read_enable <= '1';
-                            current_op <= fifo_read_data;
-                            count <= 0;
+                            if fifo_read_data.op_code = LOAD_WEIGHTS then
+                                if systolic_busy = '0' then
+                                    state <= RUNNING;
+                                    fifo_read_enable <= '1';
+                                    op_reg_0 <= fifo_read_data;
+                                    weight_buffer_enable <= '1';
+                                end if;
+                            elsif fifo_read_data.op_code = MATRIX_MULTIPLY then
+                                state <= RUNNING;
+                                fifo_read_enable <= '1';
+                                op_reg_0 <= fifo_read_data;
+                                systolic_enable <= '1';
+                            end if;
                         end if;
 
                     when RUNNING =>
                         fifo_read_enable <= '0';
-                        if count < count_limit then
-                            count <= count + 1;
-                        else
-                            state <= IDLE;
-                        end if;
+                        systolic_enable <= '0';
+                        weight_buffer_enable <= '0';
 
-                    when others =>
-                        null;
+                        if op_reg_0.op_code = LOAD_WEIGHTS then
+                            if weight_buffer_enable_shift(SIZE + 1) = '1' then
+                                state <= IDLE;
+                            end if;
+                        elsif op_reg_0.op_code = MATRIX_MULTIPLY then
+                            if systolic_enable_shift(SIZE - 2) = '1' then
+                                state <= IDLE;
+                            end if;
+                        end if;
                 end case;
+            end if;
+        end if;
+    end process;
+
+    process (clk)
+    begin
+        if rising_edge(clk) then
+            if reset = '0' then
+                systolic_enable_shift <= (others => '0');
+                weight_buffer_enable_shift <= (others => '0');
+            else
+                systolic_enable_shift <= systolic_enable_shift((systolic_enable_shift'high - 1) downto 0) & systolic_enable;
+                weight_buffer_enable_shift <= weight_buffer_enable_shift((weight_buffer_enable_shift'high - 1) downto 0) & weight_buffer_enable;
+            end if;
+        end if;
+    end process;
+
+    process (clk)
+    begin
+        if rising_edge(clk) then
+            if systolic_enable_shift(SIZE - 1) = '1' then
+                op_reg_1.unified_buffer_address <= op_reg_0.unified_buffer_address;
+                op_reg_1.accumulator_address <= op_reg_0.accumulator_address;
+            end if;
+
+            if systolic_enable_shift((SIZE * 2) - 1) = '1' then
+                op_reg_2.unified_buffer_address <= op_reg_1.unified_buffer_address;
+                op_reg_2.accumulator_address <= op_reg_1.accumulator_address;
             end if;
         end if;
     end process;
 
     process (all)
     begin
-        case current_op.op_code is
-            when LOAD_WEIGHTS =>
-                count_limit <= SIZE;
+        weight_buffer_port_1_enable <= '0';
+        weight_buffer_port_1_read_address <= 0;
+        systolic_array_weight_enable <= '0';
+        systolic_array_weight_address <= 0;
 
-            when MATRIX_MULTIPLY =>
-                count_limit <= SIZE + 8;
+        for i in 0 to (SIZE - 1) loop
+            if weight_buffer_enable_shift(i) = '1' then
+                weight_buffer_port_1_enable <= '1';
+                weight_buffer_port_1_read_address <= op_reg_0.weight_buffer_address + i;
+            end if;
+        end loop;
 
-            when others =>
-                count_limit <= 0;
-        end case;
+        for i in 1 to SIZE loop
+            if weight_buffer_enable_shift(i) = '1' then
+                systolic_array_weight_enable <= '1';
+                systolic_array_weight_address <= i - 1;
+            end if;
+        end loop;
     end process;
 
-    -- LOAD_WEIGHTS
-    weight_buffer_port_1_enable <= '1' when (state = RUNNING) and (count < SIZE) and current_op.op_code = LOAD_WEIGHTS else '0';
-    weight_buffer_port_1_read_address <= current_op.weight_buffer_address + count when (count < SIZE) and current_op.op_code = LOAD_WEIGHTS;
-        
-    systolic_array_weight_enable <= '1' when (state = RUNNING) and (count > 0) and (count < (SIZE + 1)) and current_op.op_code = LOAD_WEIGHTS else '0';
-    systolic_array_weight_address <= count - 1 when (count > 0) and (count < (SIZE + 1)) and current_op.op_code = LOAD_WEIGHTS;
+    process (all)
+    begin
+        unified_buffer_port_1_enable <= '0';
+        unified_buffer_port_1_read_address <= 0;
 
-    -- MATRIX_MULTIPLY
-    unified_buffer_port_1_enable <= '1' when (state = RUNNING) and (count < SIZE) and current_op.op_code = MATRIX_MULTIPLY else '0';
-    unified_buffer_port_1_read_address <= current_op.unified_buffer_address + count when (count < SIZE) and current_op.op_code = MATRIX_MULTIPLY;
+        accumulator_accumulate <= '0';
+        accumulator_write_address <= 0;
+        accumulator_write_enable <= '0';
 
-    accumulator_write_enable <= '1' when (state = RUNNING) and (count > 4) and (count < SIZE + 5) and current_op.op_code = MATRIX_MULTIPLY else '0';
-    accumulator_write_address <= count - 5 when (count > 4) and (count < SIZE + 5) and current_op.op_code = MATRIX_MULTIPLY;
-    accumulator_accumulate <= '0';
+        accumulator_read_address <= 0;
 
-    accumulator_read_address <= count - 8 when (count > 7) and (count < SIZE + 8) and current_op.op_code = MATRIX_MULTIPLY;
+        unified_buffer_port_0_enable <= '0';
+        unified_buffer_port_0_write_address <= 0;
+        unified_buffer_port_0_write_enable <= '0';
 
-    unified_buffer_port_0_enable <= '1' when (state = RUNNING) and (count > 8) and (count < SIZE + 9) and current_op.op_code = MATRIX_MULTIPLY else '0';
-    unified_buffer_port_0_write_address <= current_op.accumulator_address + count - 9 when (count > 8) and (count < SIZE + 9) and current_op.op_code = MATRIX_MULTIPLY;
-    unified_buffer_port_0_write_enable <= '1' when (state = RUNNING) and (count > 8) and (count < SIZE + 9) and current_op.op_code = MATRIX_MULTIPLY else '0';
+        for i in 0 to (SIZE - 1) loop
+            if systolic_enable_shift(i) = '1' then
+                unified_buffer_port_1_enable <= '1';
+                unified_buffer_port_1_read_address <= op_reg_0.unified_buffer_address + i;
+            end if;
+        end loop;
+
+        for i in (SIZE + 1) to (SIZE * 2) loop
+            if systolic_enable_shift(i) = '1' then
+                accumulator_write_enable <= '1';
+                accumulator_write_address <= i - (SIZE + 1);
+            end if;
+        end loop;
+
+        for i in (SIZE * 2) to ((SIZE * 3) - 1) loop
+            if systolic_enable_shift(i) = '1' then
+                accumulator_read_address <= i - (SIZE * 2);
+            end if;
+        end loop;
+
+        for i in ((SIZE * 2) + 1) to (SIZE * 3) loop
+            if systolic_enable_shift(i) = '1' then
+                unified_buffer_port_0_enable <= '1';
+                unified_buffer_port_0_write_enable <= '1';
+                unified_buffer_port_0_write_address <= op_reg_2.accumulator_address + i - ((SIZE * 2) + 1);
+            end if;
+        end loop;
+    end process;
+
+    process (all)
+    begin
+        for i in 0 to ((SIZE * 2) - 5) loop
+            if systolic_enable_shift(i) = '1' then
+                systolic_busy <= '1';
+                exit;
+            else
+                systolic_busy <= '0';
+            end if;
+        end loop;
+    end process;
 
 end architecture;

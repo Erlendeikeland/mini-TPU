@@ -77,7 +77,6 @@ begin
         port map(
             clk => clk,
             reset => reset,
-            fifo_full => fifo_full,
             fifo_empty => fifo_empty,
             fifo_read_enable => fifo_read_enable,
             fifo_read_data => fifo_read_data,
@@ -98,8 +97,8 @@ begin
 
     weight_buffer_inst: entity work.weight_buffer
         generic map(
-            WIDTH => 4,
-            DEPTH => 8
+            WIDTH => SIZE,
+            DEPTH => SIZE * SIZE
         )
         port map(
             clk => clk,
@@ -114,8 +113,8 @@ begin
 
     unified_buffer_inst: entity work.unified_buffer
         generic map(
-            WIDTH => 4,
-            DEPTH => 8
+            WIDTH => SIZE,
+            DEPTH => SIZE * SIZE
         )
         port map(
             clk => clk,
@@ -136,7 +135,7 @@ begin
 
     systolic_data_setup_inst: entity work.systolic_data_setup
         generic map(
-            MATRIX_WIDTH => 4
+            MATRIX_WIDTH => SIZE
         )
         port map(
             clk => clk,
@@ -157,8 +156,8 @@ begin
 
     accumulator_inst: entity work.accumulator
         generic map(
-            WIDTH => 4,
-            DEPTH => 8
+            WIDTH => SIZE,
+            DEPTH => SIZE
         )
         port map(
             clk => clk,
