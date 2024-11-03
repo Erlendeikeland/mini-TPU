@@ -13,14 +13,14 @@ entity tpu is
 
         weight_buffer_port_0_enable : in std_logic;
         weight_buffer_port_0_write_data : in weight_array;
-        weight_buffer_port_0_write_address : in natural;
+        weight_buffer_port_0_write_address : in natural range 0 to (WEIGHT_BUFFER_DEPTH - 1);
         weight_buffer_port_0_write_enable : in std_logic;
 
         unified_buffer_master_enable : in std_logic;
-        unified_buffer_master_write_address : in natural;
+        unified_buffer_master_write_address : in natural range 0 to (UNIFIED_BUFFER_DEPTH - 1);
         unified_buffer_master_write_enable : in std_logic;
         unified_buffer_master_write_data : in data_array;
-        unified_buffer_master_read_address : in natural;
+        unified_buffer_master_read_address : in natural range 0 to (UNIFIED_BUFFER_DEPTH - 1);
         unified_buffer_master_read_data : out data_array
     );
 end entity tpu;
@@ -34,25 +34,25 @@ architecture behave of tpu is
 
     signal weight_buffer_port_1_enable : std_logic;
     signal weight_buffer_port_1_read_data : weight_array;
-    signal weight_buffer_port_1_read_address : natural;
+    signal weight_buffer_port_1_read_address : natural range 0 to (WEIGHT_BUFFER_DEPTH - 1);
     
     signal unified_buffer_port_0_enable : std_logic;
-    signal unified_buffer_port_0_write_address : natural;
+    signal unified_buffer_port_0_write_address : natural range 0 to (UNIFIED_BUFFER_DEPTH - 1);
     signal unified_buffer_port_0_write_enable : std_logic;
     signal unified_buffer_port_1_enable : std_logic;
     signal unified_buffer_port_1_read_data : data_array;
-    signal unified_buffer_port_1_read_address : natural;
+    signal unified_buffer_port_1_read_address : natural range 0 to (UNIFIED_BUFFER_DEPTH - 1);
 
     signal systolic_data_setup_data_out : data_array;
 
     signal systolic_array_data_out : output_array;
-    signal systolic_array_weight_address : natural;
+    signal systolic_array_weight_address : natural range 0 to (SIZE - 1);
     signal systolic_array_weight_enable : std_logic;
     
     signal accumulator_accumulate : std_logic;
-    signal accumulator_write_address : natural;
+    signal accumulator_write_address : natural range 0 to (ACCUMULATOR_DEPTH - 1);
     signal accumulator_write_enable : std_logic;
-    signal accumulator_read_address : natural;
+    signal accumulator_read_address : natural range 0 to (ACCUMULATOR_DEPTH - 1);
     signal accumulator_read_data : output_array;
     signal accumulator_read_data_cropped : data_array;
 
@@ -98,7 +98,7 @@ begin
     weight_buffer_inst: entity work.weight_buffer
         generic map(
             WIDTH => SIZE,
-            DEPTH => SIZE * SIZE
+            DEPTH => WEIGHT_BUFFER_DEPTH
         )
         port map(
             clk => clk,
@@ -114,7 +114,7 @@ begin
     unified_buffer_inst: entity work.unified_buffer
         generic map(
             WIDTH => SIZE,
-            DEPTH => SIZE * SIZE
+            DEPTH => UNIFIED_BUFFER_DEPTH
         )
         port map(
             clk => clk,

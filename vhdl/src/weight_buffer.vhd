@@ -14,13 +14,11 @@ entity weight_buffer is
     port (
         clk : in std_logic;
         
-        -- Port 0 (Write)
         port_0_enable : in std_logic;
         port_0_write_data : in weight_array;
         port_0_write_address : in natural range 0 to (DEPTH - 1);
         port_0_write_enable : in std_logic;
 
-        -- Port 1 (Read)
         port_1_enable : in std_logic;
         port_1_read_data : out weight_array;
         port_1_read_address : in natural range 0 to (DEPTH - 1)
@@ -29,13 +27,19 @@ end entity weight_buffer;
 
 architecture behave of weight_buffer is
 
-    type RAM_t is array(0 to (DEPTH - 1)) of std_logic_vector((DATA_WIDTH * WIDTH) - 1 downto 0);
+    type RAM_t is array(0 to (DEPTH - 1)) of std_logic_vector(((DATA_WIDTH * WIDTH) - 1) downto 0);
     shared variable RAM : RAM_t;
 
+    --attribute ram_style : string;
+    --attribute ram_style of RAM : variable is "block";
+    
+    signal port_1_read_data_reg_0 : weight_array;
+    signal port_1_read_data_reg_1 : weight_array;
+    
 begin
 
     -- Port 0 (Write)
-        process (clk)
+    process (clk)
     begin
         if rising_edge(clk) then
             if port_0_enable = '1' then
@@ -54,9 +58,17 @@ begin
         if rising_edge(clk) then
             if port_1_enable = '1' then
                 for i in 0 to (WIDTH - 1) loop
-                    port_1_read_data(i) <= RAM(port_1_read_address)(i * DATA_WIDTH + (DATA_WIDTH - 1) downto i * DATA_WIDTH);
+                    port_1_read_data_reg_0(i) <= RAM(port_1_read_address)(i * DATA_WIDTH + (DATA_WIDTH - 1) downto i * DATA_WIDTH);
                 end loop;
             end if;
+        end if;
+    end process;
+
+    process (clk)
+    begin
+        if rising_edge(clk) then
+            port_1_read_data_reg_1 <= port_1_read_data_reg_0;
+            port_1_read_data <= port_1_read_data_reg_1;
         end if;
     end process;
 

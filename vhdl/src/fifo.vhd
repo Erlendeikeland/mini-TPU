@@ -1,5 +1,4 @@
 -- Instruction FIFO
--- OPs are written to FIFO
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -14,25 +13,23 @@ entity fifo is
         clk : in std_logic;
         reset : in std_logic;
 
-        -- Write
         write_enable : in std_logic;
         write_data : in op_t;
         full : out std_logic;
         
-        -- Read
         read_enable : in std_logic;
         read_data : out op_t;
         empty : out std_logic
     );
 end entity fifo;
 
-architecture rtl of fifo is
+architecture behave of fifo is
 
     type fifo_t is array(0 to (DEPTH - 1)) of op_t;
     signal fifo : fifo_t;
 
-    signal head : natural;
-    signal tail : natural;
+    signal head : natural range 0 to DEPTH;
+    signal tail : natural range 0 to DEPTH;
 
     signal looped : std_logic;
 

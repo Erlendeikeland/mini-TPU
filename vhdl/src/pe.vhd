@@ -28,6 +28,11 @@ architecture behave of PE is
 
     signal weight_reg : std_logic_vector((WEIGHT_WIDTH - 1) downto 0);
 
+    signal temp_accum_out : std_logic_vector((ACCUM_OUT_WIDTH - 1) downto 0);
+
+    --attribute use_dsp : string;
+    --attribute use_dsp of temp_accum_out : signal is "yes";
+
 begin
 
     -- Set weight register
@@ -60,10 +65,12 @@ begin
                     sum := product;
                 end if;
 
-                accum_out <= sum;
+                temp_accum_out <= sum;
                 data_out <= data_in;
             end if;
         end if;
     end process;
+
+    accum_out <= temp_accum_out;
 
 end architecture;

@@ -9,7 +9,7 @@ use std.textio.all;
 package minitpu_pkg is
 
     -- SYSTOLIC ARRAY --
-    constant SIZE : natural := 8;
+    constant SIZE : natural := 16;
 
     -- Data interface
     constant DATA_WIDTH : natural := 8;
@@ -19,26 +19,24 @@ package minitpu_pkg is
     constant WEIGHT_WIDTH : natural := 8;
     type weight_array is array(0 to (SIZE - 1)) of std_logic_vector((WEIGHT_WIDTH - 1) downto 0);
 
-    type op_code_t is (
-        NOP,
-        MATRIX_MULTIPLY,
-        LOAD_WEIGHTS
-    );
+        
+    constant NOP : std_logic_vector(1 downto 0) := "00";
+    constant MATRIX_MULTIPLY : std_logic_vector(1 downto 0) := "01";
+    constant LOAD_WEIGHTS : std_logic_vector(1 downto 0) := "10";
 
-    type op_t is record
-        op_code : op_code_t;
-        unified_buffer_address : natural;
-        weight_buffer_address : natural;
-        accumulator_address : natural;
-    end record;
+    constant OPCODE_WIDTH : natural := 32;
+    subtype op_t is std_logic_vector((OPCODE_WIDTH - 1) downto 0);
+        
 
-
-    constant MAX_ACCUM_WIDTH : natural := 19;
-
-    type output_array is array(0 to (SIZE - 1)) of std_logic_vector((MAX_ACCUM_WIDTH - 1) downto 0);
-
+    constant WEIGHT_BUFFER_DEPTH : natural := 2048;
+    constant UNIFIED_BUFFER_DEPTH : natural := 512;
+    constant ACCUMULATOR_DEPTH : natural := SIZE;
+        
+        
     function get_accum_width(row : natural) return natural;
-
+        
+    constant MAX_ACCUM_WIDTH : natural := 20;
+    type output_array is array(0 to (SIZE - 1)) of std_logic_vector((MAX_ACCUM_WIDTH - 1) downto 0);
 
 
 
@@ -63,9 +61,6 @@ package body minitpu_pkg is
         end loop;
         return integer(ceil(log2(real(sum_value))));
     end function;
-
-
-
 
 
 

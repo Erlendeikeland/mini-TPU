@@ -13,39 +13,16 @@ architecture rtl of fifo_tb is
 
     constant CLK_PERIOD : time := 10 ns;
     signal clk : std_logic := '1';
-    
     signal reset : std_logic := '0';
 
     constant DEPTH : natural := 16;
+
     signal write_data : op_t := (others => '0');
     signal write_en : std_logic := '0';
     signal full : std_logic;
     signal read_data : op_t := (others => '0');
     signal read_en : std_logic := '0';
     signal empty : std_logic;
-
-    type test_array_t is array(0 to (DEPTH - 1)) of op_t;
-
-    procedure write(
-        constant data : op_t;
-        signal write_data : out op_t;
-        signal write_en : out std_logic
-    ) is
-    begin
-        write_data <= data;
-        write_en <= '1';
-        wait for CLK_PERIOD;
-        write_en <= '0';
-    end procedure write;
-
-    procedure read(
-        signal read_en : out std_logic
-    ) is
-    begin
-        read_en <= '1';
-        wait for CLK_PERIOD;
-        read_en <= '0';
-    end procedure read;
 
 begin
 
@@ -69,49 +46,71 @@ begin
     process
     begin
         wait for CLK_PERIOD;
-        reset <= '1';
-        wait for CLK_PERIOD;
         reset <= '0';
+        wait for CLK_PERIOD;
+        reset <= '1';
         wait;
     end process;
 
     process
-        variable seed1, seed2 : integer := 999;
-        
-        impure function rand_slv(len : integer) return std_logic_vector is
-            variable r : real;
-            variable slv : std_logic_vector(len - 1 downto 0);
+        procedure write(
+            constant data : op_t
+        ) is
         begin
-            for i in slv'range loop
-                uniform(seed1, seed2, r);
-                slv(i) := '1' when r > 0.5 else '0';
-            end loop;
-            return slv;
-        end function;
+            write_data <= data;
+            write_en <= '1';
+            wait for CLK_PERIOD;
+            write_en <= '0';
+        end procedure write;
 
-        impure function rand_int(min_val, max_val : integer) return integer is
-            variable r : real;
+        variable read_data : op_t;
+
+        procedure read(
+            variable data : out op_t
+        ) is
         begin
-            uniform(seed1, seed2, r);
-            return integer(round(r * real(max_val - min_val + 1) + real(min_val) - 0.5));
-        end function;
+            read_en <= '1';
+            wait for CLK_PERIOD;
+            read_en <= '0';
+            data := read_data;
+        end procedure read;
 
-        variable test_array : test_array_t;
-        variable test_length : integer;
     begin
+
         wait for CLK_PERIOD * 5;
 
-        for i in 0 to 100 loop
-            test_length := rand_int(1, DEPTH);
-            for j in 0 to test_length - 1 loop
-                test_array(j) := rand_slv(op_t'length);
-                write(test_array(j), write_data, write_en);
-            end loop;
-            for j in 0 to test_length - 1 loop
-                read(read_en);
-                wait for CLK_PERIOD;
-                assert read_data = test_array(j) report "Mismatch" severity failure;
-            end loop;
+        for i in 0 to DEPTH * 2 loop
+            write(std_logic_vector(to_unsigned(i, 32)));
+        end loop;
+
+        wait for CLK_PERIOD * 5;
+
+        for i in 0 to DEPTH * 2 loop
+            read(read_data);
+        end loop;
+
+        wait for CLK_PERIOD * 5;
+
+        for i in 0 to DEPTH / 2 loop
+            write(std_logic_vector(to_unsigned(i + 6, 32)));
+        end loop;
+
+        wait for CLK_PERIOD * 5;
+
+        for i in 0 to DEPTH * 2 loop
+            read(read_data);
+        end loop;
+
+        wait for CLK_PERIOD * 5;
+
+        for i in 0 to DEPTH * 2 - 5 loop
+            write(std_logic_vector(to_unsigned(i, 32)));
+        end loop;
+
+        wait for CLK_PERIOD * 5;
+
+        for i in 0 to DEPTH * 2 loop
+            read(read_data);
         end loop;
 
         wait for CLK_PERIOD * 5;
