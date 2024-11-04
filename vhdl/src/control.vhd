@@ -41,12 +41,17 @@ architecture behave of control is
     signal op_reg_1 : op_t;
     signal op_reg_2 : op_t;
 
-    signal systolic_enable_shift : std_logic_vector((SIZE * 3) + 2 downto 0);
+    signal systolic_enable_shift : std_logic_vector(((SIZE - 1) + DELAY_3) downto 0);
     signal systolic_enable : std_logic;
-    signal weight_buffer_enable_shift : std_logic_vector((SIZE + 1) + 2 downto 0);
+    signal weight_buffer_enable_shift : std_logic_vector(((SIZE - 1) + WEIGHT_BUFFER_READ_DELAY) downto 0);
     signal weight_buffer_enable : std_logic;
 
     signal systolic_busy : std_logic;
+
+    signal unified_buffer_port_1_enable_reg_0 : std_logic;
+    signal unified_buffer_port_1_enable_reg_1 : std_logic;
+    signal unified_buffer_port_1_read_address_reg_0 : natural range 0 to (UNIFIED_BUFFER_DEPTH - 1);
+    signal unified_buffer_port_1_read_address_reg_1 : natural range 0 to (UNIFIED_BUFFER_DEPTH - 1);
 
 begin
 
@@ -83,11 +88,11 @@ begin
                         weight_buffer_enable <= '0';
 
                         if op_reg_0(1 downto 0) = LOAD_WEIGHTS then
-                            if weight_buffer_enable_shift(SIZE + 1 + 2) = '1' then
+                            if weight_buffer_enable_shift((SIZE - 1) + WEIGHT_BUFFER_READ_DELAY) = '1' then
                                 state <= IDLE;
                             end if;
                         elsif op_reg_0(1 downto 0) = MATRIX_MULTIPLY then
-                            if systolic_enable_shift(SIZE - 2 + 2) = '1' then
+                            if systolic_enable_shift((SIZE - 2) + UNIFIED_BUFFER_READ_DELAY) = '1' then
                                 state <= IDLE;
                             end if;
                         end if;
@@ -112,12 +117,12 @@ begin
     process (clk)
     begin
         if rising_edge(clk) then
-            if systolic_enable_shift(SIZE - 1) = '1' then
+            if systolic_enable_shift(SIZE - 1 + SYSTOLIC_SETUP_DELAY) = '1' then
                 op_reg_1(31 downto 17) <= op_reg_0(31 downto 17);
                 op_reg_1(16 downto 2) <= op_reg_0(16 downto 2);
             end if;
 
-            if systolic_enable_shift((SIZE * 2) - 1) = '1' then
+            if systolic_enable_shift(DELAY_2) = '1' then
                 op_reg_2(31 downto 17) <= op_reg_1(31 downto 17);
                 op_reg_2(16 downto 2) <= op_reg_1(16 downto 2);
             end if;
@@ -136,20 +141,18 @@ begin
                 weight_buffer_port_1_enable <= '1';
                 weight_buffer_port_1_read_address <= to_integer(unsigned(op_reg_0(31 downto 2))) + i;
             end if;
-        end loop;
 
-        for i in 1 + 2 to SIZE + 2 loop
-            if weight_buffer_enable_shift(i) = '1' then
+            if weight_buffer_enable_shift(i + WEIGHT_BUFFER_READ_DELAY) = '1' then
                 systolic_array_weight_enable <= '1';
-                systolic_array_weight_address <= i - 1 - 2;
+                systolic_array_weight_address <= i;
             end if;
         end loop;
     end process;
 
     process (all)
     begin
-        unified_buffer_port_1_enable <= '0';
-        unified_buffer_port_1_read_address <= 0;
+        unified_buffer_port_1_enable_reg_0 <= '0';
+        unified_buffer_port_1_read_address_reg_0 <= 0;
 
         accumulator_accumulate <= '0';
         accumulator_write_address <= 0;
@@ -163,31 +166,35 @@ begin
 
         for i in 0 to (SIZE - 1) loop
             if systolic_enable_shift(i) = '1' then
-                unified_buffer_port_1_enable <= '1';
-                unified_buffer_port_1_read_address <= to_integer(unsigned(op_reg_0(31 downto 17))) + i;
+                unified_buffer_port_1_enable_reg_0 <= '1';
+                unified_buffer_port_1_read_address_reg_0 <= to_integer(unsigned(op_reg_0(31 downto 17))) + i;
             end if;
-        end loop;
 
-        for i in (SIZE + 1) + 2 to (SIZE * 2) + 2 loop
-            if systolic_enable_shift(i) = '1' then
+            if systolic_enable_shift(i + DELAY_1) = '1' then
                 accumulator_write_enable <= '1';
-                accumulator_write_address <= i - (SIZE + 1) - 2;
+                accumulator_write_address <= i;
             end if;
-        end loop;
 
-        for i in (SIZE * 2) + 2 to ((SIZE * 3) - 1) + 2 loop
-            if systolic_enable_shift(i) = '1' then
-                accumulator_read_address <= i - (SIZE * 2) - 2;
+            if systolic_enable_shift(i + DELAY_2) = '1' then
+                accumulator_read_address <= i;
             end if;
-        end loop;
 
-        for i in ((SIZE * 2) + 1) + 2 to (SIZE * 3) + 2 loop
-            if systolic_enable_shift(i) = '1' then
+            if systolic_enable_shift(i + DELAY_3) = '1' then
                 unified_buffer_port_0_enable <= '1';
                 unified_buffer_port_0_write_enable <= '1';
-                unified_buffer_port_0_write_address <= to_integer(unsigned(op_reg_2(16 downto 2))) + i - ((SIZE * 2) + 1) - 2;
+                unified_buffer_port_0_write_address <= to_integer(unsigned(op_reg_2(16 downto 2))) + i;
             end if;
         end loop;
+    end process;
+
+    process (clk)
+    begin
+        if rising_edge(clk) then
+            unified_buffer_port_1_enable_reg_1 <= unified_buffer_port_1_enable_reg_0;
+            unified_buffer_port_1_read_address_reg_1 <= unified_buffer_port_1_read_address_reg_0;
+            unified_buffer_port_1_enable <= unified_buffer_port_1_enable_reg_1;
+            unified_buffer_port_1_read_address <= unified_buffer_port_1_read_address_reg_1;
+        end if;
     end process;
 
     process (all)

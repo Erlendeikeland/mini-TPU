@@ -72,7 +72,7 @@ begin
             for i in 0 to (SIZE - 1) loop
                 weight_buffer_port_0_write_address <=  address + i;
                 for j in 0 to (SIZE - 1) loop
-                    weight_buffer_port_0_write_data(j) <= std_logic_vector(to_unsigned(value, DATA_WIDTH));
+                    weight_buffer_port_0_write_data(j) <= std_logic_vector(to_unsigned(i + j, DATA_WIDTH));
                 end loop;
                 wait for CLK_PERIOD;
             end loop;
@@ -109,7 +109,7 @@ begin
 
         -- Write data to unified buffer
         write_unified_buffer(0, 1);
-        write_unified_buffer(SIZE, 4);
+        write_unified_buffer(SIZE, 2);
 
         wait for CLK_PERIOD * 5;
 

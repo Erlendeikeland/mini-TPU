@@ -18,7 +18,6 @@ package minitpu_pkg is
     -- Weight interface
     constant WEIGHT_WIDTH : natural := 8;
     type weight_array is array(0 to (SIZE - 1)) of std_logic_vector((WEIGHT_WIDTH - 1) downto 0);
-
         
     constant NOP : std_logic_vector(1 downto 0) := "00";
     constant MATRIX_MULTIPLY : std_logic_vector(1 downto 0) := "01";
@@ -28,8 +27,12 @@ package minitpu_pkg is
     subtype op_t is std_logic_vector((OPCODE_WIDTH - 1) downto 0);
         
 
-    constant WEIGHT_BUFFER_DEPTH : natural := 2048;
-    constant UNIFIED_BUFFER_DEPTH : natural := 512;
+    --constant WEIGHT_BUFFER_DEPTH : natural := 2048;
+    --constant UNIFIED_BUFFER_DEPTH : natural := 512;
+    --constant ACCUMULATOR_DEPTH : natural := SIZE;
+
+    constant WEIGHT_BUFFER_DEPTH : natural := 1024;
+    constant UNIFIED_BUFFER_DEPTH : natural := 1024;
     constant ACCUMULATOR_DEPTH : natural := SIZE;
         
         
@@ -42,6 +45,19 @@ package minitpu_pkg is
 
 
 
+    -- Control
+    constant WEIGHT_BUFFER_READ_DELAY : natural := 5;
+
+    constant UNIFIED_BUFFER_READ_DELAY : natural := 20;
+    constant SYSTOLIC_SETUP_DELAY : natural := 5;
+    constant SYSTOLIC_ARRAY_DELAY : natural := SIZE + 1;
+    constant ACCUMULATOR_DELAY : natural := SIZE - 1;
+    constant ACCUMULATOR_READ_DELAY : natural := 5;
+
+    constant DELAY_0 : natural := UNIFIED_BUFFER_READ_DELAY;
+    constant DELAY_1 : natural := UNIFIED_BUFFER_READ_DELAY + SYSTOLIC_SETUP_DELAY + SYSTOLIC_ARRAY_DELAY;
+    constant DELAY_2 : natural := UNIFIED_BUFFER_READ_DELAY + SYSTOLIC_SETUP_DELAY + SYSTOLIC_ARRAY_DELAY + ACCUMULATOR_DELAY;
+    constant DELAY_3 : natural := UNIFIED_BUFFER_READ_DELAY + SYSTOLIC_SETUP_DELAY + SYSTOLIC_ARRAY_DELAY + ACCUMULATOR_DELAY + ACCUMULATOR_READ_DELAY;
 
     -- DEBUGGING --
     procedure report_line(inp : string);

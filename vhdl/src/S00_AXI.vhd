@@ -126,9 +126,6 @@ begin
                         state <= READ_DATA_WAIT_1;
 
                     when READ_DATA_WAIT_1 =>
-                        state <= READ_DATA_WAIT_2;
-
-                    when READ_DATA_WAIT_2 =>
                         state <= READ_DATA_WAIT_3;
                         
                     when READ_DATA_WAIT_3 =>

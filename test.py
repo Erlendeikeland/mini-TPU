@@ -15,17 +15,14 @@ def matrix_multiplication(matrix1, matrix2):
 import random
 
 
-SIZE = 16
+SIZE = 8
 matrix_a = np.array([[0 for _ in range(SIZE)] for _ in range(SIZE)])
 
 for i in range(SIZE):
     for j in range(SIZE):
-        matrix_a[i][j] = i % 4 + 2
+        matrix_a[i][j] = i + j
 
-matrix_b = np.array([[2 for _ in range(SIZE)] for _ in range(SIZE)])
+matrix_b = np.array([[1 for _ in range(SIZE)] for _ in range(SIZE)])
 
 for row in matrix_multiplication(matrix_a, matrix_b):
     print([int(x) for x in row])
-
-
-print(hex(0x400FFFFF - 0x40000000))

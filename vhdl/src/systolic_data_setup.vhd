@@ -7,7 +7,8 @@ use work.minitpu_pkg.all;
 
 entity systolic_data_setup is
     generic (
-        MATRIX_WIDTH : natural
+        MATRIX_WIDTH : natural;
+        PIPELINE_STAGES : natural
     );
     port (
         clk : in std_logic;
@@ -20,6 +21,11 @@ architecture behave of systolic_data_setup is
 
     type data_array_2d is array (1 to (MATRIX_WIDTH - 1), 1 to (MATRIX_WIDTH - 1)) of std_logic_vector((DATA_WIDTH - 1) downto 0);
     signal data_reg : data_array_2d;
+
+    type pipeline_array_t is array(0 to (PIPELINE_STAGES - 1)) of data_array;
+    signal data_out_reg : pipeline_array_t;
+
+    signal temp_data_out : data_array;
 
 begin
 
@@ -43,10 +49,22 @@ begin
 
     process (all)
     begin
-        data_out(0) <= data_in(0);
+        temp_data_out(0) <= data_in(0);
         for i in 1 to (MATRIX_WIDTH - 1) loop
-            data_out(i) <= data_reg(i, i);
+            temp_data_out(i) <= data_reg(i, i);
         end loop;
     end process;
+
+    process (clk)
+    begin
+        if rising_edge(clk) then
+            data_out_reg(0) <= temp_data_out;
+            for i in 1 to (PIPELINE_STAGES - 1) loop
+                data_out_reg(i) <= data_out_reg((i - 1));
+            end loop;
+        end if;
+    end process;
+
+    data_out <= data_out_reg((PIPELINE_STAGES - 1));
 
 end architecture;

@@ -98,7 +98,8 @@ begin
     weight_buffer_inst: entity work.weight_buffer
         generic map(
             WIDTH => SIZE,
-            DEPTH => WEIGHT_BUFFER_DEPTH
+            DEPTH => WEIGHT_BUFFER_DEPTH,
+            PIPELINE_STAGES => WEIGHT_BUFFER_READ_DELAY
         )
         port map(
             clk => clk,
@@ -114,7 +115,8 @@ begin
     unified_buffer_inst: entity work.unified_buffer
         generic map(
             WIDTH => SIZE,
-            DEPTH => UNIFIED_BUFFER_DEPTH
+            DEPTH => UNIFIED_BUFFER_DEPTH,
+            PIPELINE_STAGES => UNIFIED_BUFFER_READ_DELAY - 2
         )
         port map(
             clk => clk,
@@ -135,7 +137,8 @@ begin
 
     systolic_data_setup_inst: entity work.systolic_data_setup
         generic map(
-            MATRIX_WIDTH => SIZE
+            MATRIX_WIDTH => SIZE,
+            PIPELINE_STAGES => SYSTOLIC_SETUP_DELAY
         )
         port map(
             clk => clk,
@@ -146,7 +149,6 @@ begin
     systolic_array_inst: entity work.systolic_array
         port map(
             clk => clk,
-            enable => '1',
             data_in => systolic_data_setup_data_out, --
             data_out => systolic_array_data_out, --
             weight_in => weight_buffer_port_1_read_data, --
@@ -157,7 +159,8 @@ begin
     accumulator_inst: entity work.accumulator
         generic map(
             WIDTH => SIZE,
-            DEPTH => SIZE
+            DEPTH => SIZE,
+            PIPELINE_STAGES => ACCUMULATOR_READ_DELAY
         )
         port map(
             clk => clk,

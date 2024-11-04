@@ -7,7 +7,8 @@ use work.minitpu_pkg.all;
 entity accumulator is
     generic (
         WIDTH : natural;
-        DEPTH : natural
+        DEPTH : natural;
+        PIPELINE_STAGES : natural
     );
     port (
         clk : in std_logic;
@@ -30,6 +31,9 @@ architecture behave of accumulator is
 
     type shift_address_t is array(0 to (WIDTH - 1)) of natural range 0 to (DEPTH - 1);
     type shift_data_t is array(0 to (WIDTH - 1)) of output_array;
+
+    type pipeline_array_t is array(0 to (PIPELINE_STAGES - 1)) of output_array;
+    signal read_data_reg : pipeline_array_t;
 
 begin
 
@@ -60,9 +64,15 @@ begin
             end if;
 
             for i in 0 to (WIDTH - 1) loop
-                read_data(i) <= RAM(read_address)(i * MAX_ACCUM_WIDTH + (MAX_ACCUM_WIDTH - 1) downto i * MAX_ACCUM_WIDTH);
+                read_data_reg(0)(i) <= RAM(read_address)(i * MAX_ACCUM_WIDTH + (MAX_ACCUM_WIDTH - 1) downto i * MAX_ACCUM_WIDTH);
+            end loop;
+
+            for i in 1 to (PIPELINE_STAGES - 1) loop
+                read_data_reg(i) <= read_data_reg(i - 1);
             end loop;
         end if;
     end process;
+
+    read_data <= read_data_reg(PIPELINE_STAGES - 1);
 
 end architecture;

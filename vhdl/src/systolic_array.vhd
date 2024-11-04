@@ -10,13 +10,9 @@ entity systolic_array is
     port (
         clk : in std_logic;
 
-        enable : in std_logic;
-
-        -- Data interface
         data_in : in data_array;
         data_out : out output_array;
         
-        -- Weight interface
         weight_in : in weight_array;
         weight_address : in natural range 0 to (SIZE - 1);
         weight_enable : in std_logic
@@ -51,7 +47,6 @@ begin
                     )
                     port map (
                         clk => clk,
-                        enable => enable,
                         data_in => data_in(x),
                         data_out => data(x, y),
                         accum_in => (others => '0'),
@@ -70,7 +65,6 @@ begin
                     )
                     port map (
                         clk => clk,
-                        enable => enable,
                         data_in => data(x, y - 1),
                         data_out => data(x, y),
                         accum_in => (others => '0'),
@@ -89,7 +83,6 @@ begin
                     )
                     port map (
                         clk => clk,
-                        enable => enable,
                         data_in => data_in(x),
                         data_out => data(x, y),
                         accum_in => accum(x - 1, y)(get_accum_width(x - 1) - 1 downto 0),
@@ -108,7 +101,6 @@ begin
                     )
                     port map (
                         clk => clk,
-                        enable => enable,
                         data_in => data(x, y - 1),
                         data_out => data(x, y),
                         accum_in => accum(x - 1, y)(get_accum_width(x - 1) - 1 downto 0),
