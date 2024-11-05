@@ -48,11 +48,6 @@ architecture behave of control is
 
     signal systolic_busy : std_logic;
 
-    signal unified_buffer_port_1_enable_reg_0 : std_logic;
-    signal unified_buffer_port_1_enable_reg_1 : std_logic;
-    signal unified_buffer_port_1_read_address_reg_0 : natural range 0 to (UNIFIED_BUFFER_DEPTH - 1);
-    signal unified_buffer_port_1_read_address_reg_1 : natural range 0 to (UNIFIED_BUFFER_DEPTH - 1);
-
 begin
 
     process (clk)
@@ -151,8 +146,8 @@ begin
 
     process (all)
     begin
-        unified_buffer_port_1_enable_reg_0 <= '0';
-        unified_buffer_port_1_read_address_reg_0 <= 0;
+        unified_buffer_port_1_enable <= '0';
+        unified_buffer_port_1_read_address <= 0;
 
         accumulator_accumulate <= '0';
         accumulator_write_address <= 0;
@@ -166,8 +161,8 @@ begin
 
         for i in 0 to (SIZE - 1) loop
             if systolic_enable_shift(i) = '1' then
-                unified_buffer_port_1_enable_reg_0 <= '1';
-                unified_buffer_port_1_read_address_reg_0 <= to_integer(unsigned(op_reg_0(31 downto 17))) + i;
+                unified_buffer_port_1_enable <= '1';
+                unified_buffer_port_1_read_address <= to_integer(unsigned(op_reg_0(31 downto 17))) + i;
             end if;
 
             if systolic_enable_shift(i + DELAY_1) = '1' then
@@ -185,16 +180,6 @@ begin
                 unified_buffer_port_0_write_address <= to_integer(unsigned(op_reg_2(16 downto 2))) + i;
             end if;
         end loop;
-    end process;
-
-    process (clk)
-    begin
-        if rising_edge(clk) then
-            unified_buffer_port_1_enable_reg_1 <= unified_buffer_port_1_enable_reg_0;
-            unified_buffer_port_1_read_address_reg_1 <= unified_buffer_port_1_read_address_reg_0;
-            unified_buffer_port_1_enable <= unified_buffer_port_1_enable_reg_1;
-            unified_buffer_port_1_read_address <= unified_buffer_port_1_read_address_reg_1;
-        end if;
     end process;
 
     process (all)

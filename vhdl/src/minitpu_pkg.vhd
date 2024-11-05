@@ -9,7 +9,7 @@ use std.textio.all;
 package minitpu_pkg is
 
     -- SYSTOLIC ARRAY --
-    constant SIZE : natural := 16;
+    constant SIZE : natural := 8;
 
     -- Data interface
     constant DATA_WIDTH : natural := 8;
@@ -31,14 +31,14 @@ package minitpu_pkg is
     --constant UNIFIED_BUFFER_DEPTH : natural := 512;
     --constant ACCUMULATOR_DEPTH : natural := SIZE;
 
-    constant WEIGHT_BUFFER_DEPTH : natural := 1024;
-    constant UNIFIED_BUFFER_DEPTH : natural := 1024;
+    constant WEIGHT_BUFFER_DEPTH : natural := 128;
+    constant UNIFIED_BUFFER_DEPTH : natural := 128;
     constant ACCUMULATOR_DEPTH : natural := SIZE;
         
         
     function get_accum_width(row : natural) return natural;
         
-    constant MAX_ACCUM_WIDTH : natural := 20;
+    constant MAX_ACCUM_WIDTH : natural := 19;
     type output_array is array(0 to (SIZE - 1)) of std_logic_vector((MAX_ACCUM_WIDTH - 1) downto 0);
 
 
@@ -46,13 +46,13 @@ package minitpu_pkg is
 
 
     -- Control
-    constant WEIGHT_BUFFER_READ_DELAY : natural := 5;
+    constant WEIGHT_BUFFER_READ_DELAY : natural := 2;
 
-    constant UNIFIED_BUFFER_READ_DELAY : natural := 20;
-    constant SYSTOLIC_SETUP_DELAY : natural := 5;
+    constant UNIFIED_BUFFER_READ_DELAY : natural := 2;
+    constant SYSTOLIC_SETUP_DELAY : natural := 2;
     constant SYSTOLIC_ARRAY_DELAY : natural := SIZE + 1;
     constant ACCUMULATOR_DELAY : natural := SIZE - 1;
-    constant ACCUMULATOR_READ_DELAY : natural := 5;
+    constant ACCUMULATOR_READ_DELAY : natural := 2;
 
     constant DELAY_0 : natural := UNIFIED_BUFFER_READ_DELAY;
     constant DELAY_1 : natural := UNIFIED_BUFFER_READ_DELAY + SYSTOLIC_SETUP_DELAY + SYSTOLIC_ARRAY_DELAY;

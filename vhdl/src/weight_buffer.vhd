@@ -9,8 +9,7 @@ use work.minitpu_pkg.all;
 entity weight_buffer is
     generic (
         WIDTH : natural;
-        DEPTH : natural;
-        PIPELINE_STAGES : natural
+        DEPTH : natural
     );
     port (
         clk : in std_logic;
@@ -34,9 +33,8 @@ architecture behave of weight_buffer is
     --attribute ram_style : string;
     --attribute ram_style of RAM : variable is "block";
     
-    type pipeline_array_t is array(0 to (PIPELINE_STAGES - 1)) of weight_array;
-    signal port_1_read_data_reg : pipeline_array_t;
-    
+    signal port_1_read_data_reg : weight_array;
+
 begin
 
     process (clk)
@@ -57,16 +55,12 @@ begin
         if rising_edge(clk) then
             if port_1_enable = '1' then
                 for i in 0 to (WIDTH - 1) loop
-                    port_1_read_data_reg(0)(i) <= RAM(port_1_read_address)((i * DATA_WIDTH + (DATA_WIDTH - 1)) downto (i * DATA_WIDTH));
+                    port_1_read_data_reg(i) <= RAM(port_1_read_address)((i * DATA_WIDTH + (DATA_WIDTH - 1)) downto (i * DATA_WIDTH));
                 end loop;
             end if;
-
-            for i in 1 to (PIPELINE_STAGES - 1) loop
-                port_1_read_data_reg(i) <= port_1_read_data_reg(i - 1);
-            end loop;
         end if;
     end process;
 
-    port_1_read_data <= port_1_read_data_reg(PIPELINE_STAGES - 1);
+    port_1_read_data <= port_1_read_data_reg;
 
 end architecture;
