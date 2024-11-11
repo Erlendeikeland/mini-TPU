@@ -41,6 +41,16 @@ architecture behave of control is
     signal op_reg_1 : op_t;
     signal op_reg_2 : op_t;
 
+    signal weight_buffer_count : natural range 0 to (WEIGHT_BUFFER_DEPTH - 1);
+    signal weight_buffer_count_enable : std_logic;
+
+    signal unified_buffer_read_count : natural range 0 to (UNIFIED_BUFFER_DEPTH - 1);
+    signal unified_buffer_read_count_enable : std_logic;
+
+    signal unified_buffer_write_count : natural range 0 to (UNIFIED_BUFFER_DEPTH - 1);
+    signal unified_buffer_write_count_enable : std_logic;
+    
+
     signal systolic_enable_shift : std_logic_vector(((SIZE - 1) + DELAY_3) downto 0);
     signal systolic_enable : std_logic;
     signal weight_buffer_enable_shift : std_logic_vector(((SIZE - 1) + WEIGHT_BUFFER_READ_DELAY) downto 0);
@@ -127,14 +137,12 @@ begin
     process (all)
     begin
         weight_buffer_port_1_enable <= '0';
-        weight_buffer_port_1_read_address <= 0;
         systolic_array_weight_enable <= '0';
         systolic_array_weight_address <= 0;
 
         for i in 0 to (SIZE - 1) loop
             if weight_buffer_enable_shift(i) = '1' then
                 weight_buffer_port_1_enable <= '1';
-                weight_buffer_port_1_read_address <= to_integer(unsigned(op_reg_0(31 downto 2))) + i;
             end if;
 
             if weight_buffer_enable_shift(i + WEIGHT_BUFFER_READ_DELAY) = '1' then
@@ -144,10 +152,23 @@ begin
         end loop;
     end process;
 
+    process (clk)
+    begin
+        if rising_edge(clk) then
+            if weight_buffer_count_enable = '1' then
+                weight_buffer_count <= weight_buffer_count + 1;
+            elsif weight_buffer_enable = '1' then
+                weight_buffer_count <= to_integer(unsigned(op_reg_0(31 downto 2)));
+            end if;
+        end if;
+    end process;
+
+    weight_buffer_count_enable <= or weight_buffer_enable_shift((SIZE - 2) downto 0);
+    weight_buffer_port_1_read_address <= weight_buffer_count;
+
     process (all)
     begin
         unified_buffer_port_1_enable <= '0';
-        unified_buffer_port_1_read_address <= 0;
 
         accumulator_accumulate <= '0';
         accumulator_write_address <= 0;
@@ -156,13 +177,12 @@ begin
         accumulator_read_address <= 0;
 
         unified_buffer_port_0_enable <= '0';
-        unified_buffer_port_0_write_address <= 0;
         unified_buffer_port_0_write_enable <= '0';
+        --unified_buffer_port_0_write_address <= 0;
 
         for i in 0 to (SIZE - 1) loop
             if systolic_enable_shift(i) = '1' then
                 unified_buffer_port_1_enable <= '1';
-                unified_buffer_port_1_read_address <= to_integer(unsigned(op_reg_0(31 downto 17))) + i;
             end if;
 
             if systolic_enable_shift(i + DELAY_1) = '1' then
@@ -177,10 +197,38 @@ begin
             if systolic_enable_shift(i + DELAY_3) = '1' then
                 unified_buffer_port_0_enable <= '1';
                 unified_buffer_port_0_write_enable <= '1';
-                unified_buffer_port_0_write_address <= to_integer(unsigned(op_reg_2(16 downto 2))) + i;
+                --unified_buffer_port_0_write_address <= to_integer(unsigned(op_reg_2(16 downto 2))) + i;
             end if;
         end loop;
     end process;
+
+    process (clk)
+    begin
+        if rising_edge(clk) then
+            if unified_buffer_read_count_enable = '1' then
+                unified_buffer_read_count <= unified_buffer_read_count + 1;
+            elsif systolic_enable = '1' then
+                unified_buffer_read_count <= to_integer(unsigned(op_reg_0(31 downto 17)));
+            end if;
+        end if;
+    end process;
+
+    unified_buffer_read_count_enable <= or systolic_enable_shift((SIZE - 2) downto 0);
+    unified_buffer_port_1_read_address <= unified_buffer_read_count;
+
+    process (clk)
+    begin
+        if rising_edge(clk) then
+            if unified_buffer_write_count_enable = '1' then
+                unified_buffer_write_count <= unified_buffer_write_count + 1;
+            elsif systolic_enable_shift(DELAY_3 - 1) = '1' then
+                unified_buffer_write_count <= to_integer(unsigned(op_reg_2(16 downto 2)));
+            end if;
+        end if;
+    end process;
+
+    unified_buffer_write_count_enable <= or systolic_enable_shift(DELAY_3 + (SIZE - 2) downto DELAY_3);
+    unified_buffer_port_0_write_address <= unified_buffer_write_count;
 
     process (all)
     begin

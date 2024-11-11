@@ -118,7 +118,7 @@ begin
         fifo_write_data(31 downto 2) <= std_logic_vector(to_unsigned(0, 30));
         wait for CLK_PERIOD;
         fifo_write_enable <= '0';
-        
+
         fifo_write_enable <= '1';
         fifo_write_data(1 downto 0) <= MATRIX_MULTIPLY;
         fifo_write_data(31 downto 17) <= std_logic_vector(to_unsigned(0, 15));

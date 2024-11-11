@@ -128,6 +128,32 @@ begin
 
         axilite_if <= init_axilite_if_signals(C_S_AXI_ADDR_WIDTH, C_S_AXI_DATA_WIDTH);
 
+
+
+
+
+        write_data := 32x"01020304";
+        write_address := to_unsigned(8, C_S_AXI_ADDR_WIDTH - 4) & to_unsigned(0, 2) & to_unsigned(0, 2);
+        axilite_write(write_address, write_data, "Write");
+
+        write_data := 32x"05060708";
+        write_address := to_unsigned(16, C_S_AXI_ADDR_WIDTH - 4) & to_unsigned(0, 2) & to_unsigned(1, 2);
+        axilite_write(write_address, write_data, "Write");
+
+        read_address := to_unsigned(16, C_S_AXI_ADDR_WIDTH - 4) & to_unsigned(1, 2) & to_unsigned(0, 2);
+        axilite_read(read_address, read_data, "Read");
+
+        read_address := to_unsigned(16, C_S_AXI_ADDR_WIDTH - 4) & to_unsigned(1, 2) & to_unsigned(1, 2);
+        axilite_read(read_address, read_data, "Read");
+                
+        wait for CLK_PERIOD * 30;
+
+        stop;
+
+
+
+
+
         wait for CLK_PERIOD * 5;
 
         -- Write unified buffer data
