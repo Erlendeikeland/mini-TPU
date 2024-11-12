@@ -31,8 +31,8 @@ package minitpu_pkg is
     --constant UNIFIED_BUFFER_DEPTH : natural := 512;
     --constant ACCUMULATOR_DEPTH : natural := SIZE;
 
-    constant WEIGHT_BUFFER_DEPTH : natural := 128;
-    constant UNIFIED_BUFFER_DEPTH : natural := 128;
+    constant WEIGHT_BUFFER_DEPTH : natural := 512;
+    constant UNIFIED_BUFFER_DEPTH : natural := 512;
     constant ACCUMULATOR_DEPTH : natural := SIZE;
         
         
@@ -46,9 +46,9 @@ package minitpu_pkg is
 
 
     -- Control
-    constant WEIGHT_BUFFER_READ_DELAY : natural := 4;
+    constant WEIGHT_BUFFER_READ_DELAY : natural := 5;
 
-    constant UNIFIED_BUFFER_READ_DELAY : natural := 4;
+    constant UNIFIED_BUFFER_READ_DELAY : natural := 5;
     constant SYSTOLIC_SETUP_DELAY : natural := 1;
     constant SYSTOLIC_ARRAY_DELAY : natural := SIZE + 1;
     constant ACCUMULATOR_DELAY : natural := SIZE - 1;

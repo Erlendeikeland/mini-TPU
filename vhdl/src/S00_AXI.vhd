@@ -58,7 +58,7 @@ architecture behave of S00_AXI is
 
     constant BLOCKS : natural := (DATA_WIDTH * SIZE) / C_S_AXI_DATA_WIDTH;
     
-    type state_t is (IDLE, READ_ADDRESS, READ_DATA_WAIT_0, READ_DATA_WAIT_1, READ_DATA_WAIT_2, READ_DATA_WAIT_3, READ_DATA, WRITE_ADDRESS, WRITE_FIFO, WRITE_DATA_WAIT, WRITE_DATA);
+    type state_t is (IDLE, READ_ADDRESS, READ_DATA_WAIT_0, READ_DATA_WAIT_1, READ_DATA, WRITE_ADDRESS, WRITE_FIFO, WRITE_DATA_WAIT, WRITE_DATA);
     signal state : state_t;
 
     signal read_enable : std_logic;
@@ -92,6 +92,7 @@ begin
         variable count : natural range 0 to (BLOCKS - 1);
         variable write_index : natural range 0 to (BLOCKS - 1);
         variable read_index : natural range 0 to (BLOCKS - 1);
+        variable read_wait : natural range 0 to UNIFIED_BUFFER_READ_DELAY - 1;
     begin
         if rising_edge(S_AXI_ACLK) then
             if S_AXI_ARESETN = '0' then
@@ -120,19 +121,18 @@ begin
                         if S_AXI_RREADY = '1' then
                             read_enable <= '1';
                             state <= READ_DATA_WAIT_0;
+                            read_wait := 0;
                         end if;
 
                     when READ_DATA_WAIT_0 =>
                         read_enable <= '0';
-                        state <= READ_DATA_WAIT_1;
-
-                    when READ_DATA_WAIT_1 =>
-                        state <= READ_DATA_WAIT_2;
-
-                    when READ_DATA_WAIT_2 =>
-                        state <= READ_DATA_WAIT_3;
+                        if read_wait = (UNIFIED_BUFFER_READ_DELAY - 1) then
+                            state <= READ_DATA_WAIT_1;
+                        else
+                            read_wait := read_wait + 1;
+                        end if;
                         
-                    when READ_DATA_WAIT_3 =>
+                    when READ_DATA_WAIT_1 =>
                         read_index := to_integer(unsigned(read_address_reg(3 downto 2)));
 
                         for i in 0 to 3 loop
