@@ -46,12 +46,12 @@ package minitpu_pkg is
 
 
     -- Control
-    constant WEIGHT_BUFFER_READ_DELAY : natural := 30;
+    constant WEIGHT_BUFFER_READ_DELAY : natural := 4;
 
-    constant UNIFIED_BUFFER_READ_DELAY : natural := 10;
+    constant UNIFIED_BUFFER_READ_DELAY : natural := 4;
     constant SYSTOLIC_SETUP_DELAY : natural := 1;
     constant SYSTOLIC_ARRAY_DELAY : natural := SIZE + 1;
-    constant ACCUMULATOR_DELAY : natural := SIZE;
+    constant ACCUMULATOR_DELAY : natural := SIZE - 1;
     constant ACCUMULATOR_READ_DELAY : natural := 2;
 
     constant DELAY_0 : natural := UNIFIED_BUFFER_READ_DELAY;

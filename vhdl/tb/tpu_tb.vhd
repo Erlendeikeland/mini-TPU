@@ -104,8 +104,8 @@ begin
             for i in 0 to (SIZE - 1) loop
                 weight_buffer_port_0_write_address <=  address + i;
                 for j in 0 to (SIZE - 1) loop
-                    --weight_buffer_port_0_write_data(j) <= std_logic_vector(to_unsigned(i mod (j + value), DATA_WIDTH));
-                    weight_buffer_port_0_write_data(j) <= std_logic_vector(to_unsigned(2, DATA_WIDTH));
+                    weight_buffer_port_0_write_data(j) <= std_logic_vector(to_unsigned(i mod (j + value), DATA_WIDTH));
+                    --weight_buffer_port_0_write_data(j) <= std_logic_vector(to_unsigned(2, DATA_WIDTH));
                 end loop;
                 wait for CLK_PERIOD;
             end loop;
@@ -123,8 +123,8 @@ begin
             for i in 0 to (SIZE - 1) loop
                 unified_buffer_master_write_address <= address + i;
                 for j in 0 to (SIZE - 1) loop
-                    --unified_buffer_master_write_data(j) <= std_logic_vector(to_unsigned(i mod (j + value), DATA_WIDTH));
-                    unified_buffer_master_write_data(j) <= std_logic_vector(to_unsigned(i + 1, DATA_WIDTH));
+                    unified_buffer_master_write_data(j) <= std_logic_vector(to_unsigned(i mod (j + value), DATA_WIDTH));
+                    --unified_buffer_master_write_data(j) <= std_logic_vector(to_unsigned(i + 1, DATA_WIDTH));
                 end loop;
                 wait for CLK_PERIOD;
             end loop;
@@ -189,7 +189,7 @@ begin
         unified_buffer_master_enable <= '1';
         for i in 0 to (SIZE - 1) loop
             unified_buffer_master_read_address <= i + SIZE * 2;
-            wait for CLK_PERIOD * 4;
+            wait for CLK_PERIOD * (UNIFIED_BUFFER_READ_DELAY + 1);
             report_array(unified_buffer_master_read_data);
             for j in 0 to (SIZE - 1) loop
                 assert to_integer(unsigned(unified_buffer_master_read_data(j))) = expected_array_0(i, j) report "Error at index " & integer'image(i) & ", " & integer'image(j);
@@ -204,7 +204,7 @@ begin
         unified_buffer_master_enable <= '1';
         for i in 0 to (SIZE - 1) loop
             unified_buffer_master_read_address <= i + SIZE * 3;
-            wait for CLK_PERIOD * 4;
+            wait for CLK_PERIOD * (UNIFIED_BUFFER_READ_DELAY + 1);
             report_array(unified_buffer_master_read_data);
             for j in 0 to (SIZE - 1) loop
                 assert to_integer(unsigned(unified_buffer_master_read_data(j))) = expected_array_1(i, j) report "Error at index " & integer'image(i) & ", " & integer'image(j);
@@ -219,7 +219,7 @@ begin
         unified_buffer_master_enable <= '1';
         for i in 0 to (SIZE - 1) loop
             unified_buffer_master_read_address <= i + SIZE * 4;
-            wait for CLK_PERIOD * 4;
+            wait for CLK_PERIOD * (UNIFIED_BUFFER_READ_DELAY + 1);
             report_array(unified_buffer_master_read_data);
             for j in 0 to (SIZE - 1) loop
                 assert to_integer(unsigned(unified_buffer_master_read_data(j))) = expected_array_2(i, j) report "Error at index " & integer'image(i) & ", " & integer'image(j);
