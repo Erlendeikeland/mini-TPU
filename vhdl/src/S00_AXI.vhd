@@ -107,11 +107,11 @@ begin
                             read_address_reg <= S_AXI_ARADDR;
                         elsif S_AXI_AWVALID = '1' and S_AXI_ARVALID = '0' then
                             write_address_reg <= S_AXI_AWADDR;
-                            write_index := to_integer(unsigned(S_AXI_AWADDR(17 downto 16)));
+                            write_index := to_integer(unsigned(S_AXI_AWADDR(3 downto 2)));
                             write_data_reg(((write_index * C_S_AXI_DATA_WIDTH) + (C_S_AXI_DATA_WIDTH - 1)) downto (write_index * C_S_AXI_DATA_WIDTH)) <= S_AXI_WDATA;
-                            if (S_AXI_AWADDR(19 downto 18) = "00") or (S_AXI_AWADDR(19 downto 18) = "01") then
+                            if (S_AXI_AWADDR(5 downto 4) = "00") or (S_AXI_AWADDR(5 downto 4) = "01") then
                                 state <= WRITE_ADDRESS;
-                            elsif (S_AXI_AWADDR(19 downto 18) = "10") then
+                            elsif (S_AXI_AWADDR(5 downto 4) = "10") then
                                 state <= WRITE_FIFO;
                             end if;
                         end if;
@@ -133,7 +133,7 @@ begin
                         state <= READ_DATA_WAIT_3;
                         
                     when READ_DATA_WAIT_3 =>
-                        read_index := to_integer(unsigned(read_address_reg(17 downto 16)));
+                        read_index := to_integer(unsigned(read_address_reg(3 downto 2)));
 
                         for i in 0 to 3 loop
                             S_AXI_RDATA(((i * 8) + 7) downto (i * 8)) <= unified_buffer_master_read_data(i + (4 * read_index));
@@ -185,26 +185,26 @@ begin
     S_AXI_RVALID <= '1' when state = READ_DATA else '0';
     S_AXI_RRESP <= "00";
 
-    unified_buffer_master_enable <= '1' when (write_enable = '1' and (write_address_reg(19 downto 18) = "00")) or read_enable = '1' else '0';
-    unified_buffer_master_write_enable <= '1' when (write_enable = '1') and (write_address_reg(19 downto 18) = "00") else '0';
+    unified_buffer_master_enable <= '1' when (write_enable = '1' and (write_address_reg(5 downto 4) = "00")) or read_enable = '1' else '0';
+    unified_buffer_master_write_enable <= '1' when (write_enable = '1') and (write_address_reg(5 downto 4) = "00") else '0';
 
-    unified_buffer_master_write_address <= to_integer(unsigned(write_address_reg(15 downto 0))) / 4;
-    unified_buffer_master_read_address <= to_integer(unsigned(read_address_reg(15 downto 0))) / 4;
+    unified_buffer_master_write_address <= to_integer(unsigned(write_address_reg(19 downto 6)));
+    unified_buffer_master_read_address <= to_integer(unsigned(read_address_reg(19 downto 6)));
 
-    weight_buffer_port_0_enable <= '1' when (write_enable = '1') and (write_address_reg(19 downto 18) = "01") else '0';
-    weight_buffer_port_0_write_enable <= '1' when (write_enable = '1') and (write_address_reg(19 downto 18) = "01") else '0';
-    weight_buffer_port_0_write_address <= to_integer(unsigned(write_address_reg(15 downto 0))) / 4;
+    weight_buffer_port_0_enable <= '1' when (write_enable = '1') and (write_address_reg(5 downto 4) = "01") else '0';
+    weight_buffer_port_0_write_enable <= '1' when (write_enable = '1') and (write_address_reg(5 downto 4) = "01") else '0';
+    weight_buffer_port_0_write_address <= to_integer(unsigned(write_address_reg(19 downto 6)));
 
-    fifo_write_enable <= '1' when write_enable = '1' and write_address_reg(19 downto 18) = "10" else '0';
+    fifo_write_enable <= '1' when write_enable = '1' and write_address_reg(5 downto 4) = "10" else '0';
 
     process (all)
     begin
         for i in 0 to (SIZE - 1) loop
-            unified_buffer_master_write_data(i) <= write_data_reg((i * 8) + 7 downto (i * 8));
+            unified_buffer_master_write_data(i) <= write_data_reg(((i * 8) + 7) downto (i * 8));
         end loop;
 
         for i in 0 to (SIZE - 1) loop
-            weight_buffer_port_0_write_data(i) <= write_data_reg((i * 8) + 7 downto (i * 8));
+            weight_buffer_port_0_write_data(i) <= write_data_reg(((i * 8) + 7) downto (i * 8));
         end loop;
 
         fifo_write_data <= write_data_reg(31 downto 0);

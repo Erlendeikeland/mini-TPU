@@ -123,7 +123,7 @@ begin
         for i in 0 to (SIZE - 1) loop
             for j in 0 to (BLOCKS - 1) loop
                 write_data := std_logic_vector(to_unsigned(i mod 4 + 2, 8)) & std_logic_vector(to_unsigned(i mod 4 + 2, 8)) & std_logic_vector(to_unsigned(i mod 4 + 2, 8)) & std_logic_vector(to_unsigned(i mod 4 + 2, 8));
-                write_address := to_unsigned(0, 2) & to_unsigned(j, 2) & to_unsigned(i * BLOCKS, C_S_AXI_ADDR_WIDTH - 4);
+                write_address := to_unsigned(i, C_S_AXI_ADDR_WIDTH - 6) & to_unsigned(0, 2) & to_unsigned(j, 2) & "00";
                 axilite_write(write_address, write_data, "Write unified, address: " & integer'image(to_integer(to_unsigned(i, C_S_AXI_ADDR_WIDTH - 2))) & ", offset: " & integer'image(j));
             end loop;
         end loop;
@@ -133,7 +133,7 @@ begin
         -- Read unified buffer data
         for i in 0 to (SIZE - 1) loop
             for j in 0 to (BLOCKS - 1) loop
-                read_address := to_unsigned(0, 2) & to_unsigned(j, 2) & to_unsigned(i * BLOCKS, C_S_AXI_ADDR_WIDTH - 4);
+                read_address := to_unsigned(i, C_S_AXI_ADDR_WIDTH - 6) & to_unsigned(0, 2) & to_unsigned(j, 2) & "00";
                 axilite_read(read_address, read_data, "Read unified, address: " & integer'image(to_integer(to_unsigned(i, C_S_AXI_ADDR_WIDTH - 2))) & ", offset: " & integer'image(j));
                 assert read_data = std_logic_vector(to_unsigned(i mod 4 + 2, 8)) & std_logic_vector(to_unsigned(i mod 4 + 2, 8)) & std_logic_vector(to_unsigned(i mod 4 + 2, 8)) & std_logic_vector(to_unsigned(i mod 4 + 2, 8)) report "Read data mismatch" severity failure;
             end loop;
@@ -145,19 +145,19 @@ begin
         for i in 0 to (SIZE - 1) loop
             for j in 0 to (BLOCKS - 1) loop
                 write_data := 32x"02020202";
-                write_address := to_unsigned(1, 2) & to_unsigned(j, 2) & to_unsigned(i * BLOCKS, C_S_AXI_ADDR_WIDTH - 4);
+                write_address := to_unsigned(i, C_S_AXI_ADDR_WIDTH - 6) & to_unsigned(1, 2) & to_unsigned(j, 2) & "00";
                 axilite_write(write_address, write_data, "Write weight, address: " & integer'image(to_integer(to_unsigned(i, C_S_AXI_ADDR_WIDTH - 2))) & ", offset: " & integer'image(j));
             end loop;
         end loop;
 
         -- Load weights
         write_data := std_logic_vector(to_unsigned(0, 30)) & std_logic_vector(to_unsigned(2, 2));
-        write_address := to_unsigned(2, 2) & to_unsigned(0, 2) & to_unsigned(0, C_S_AXI_ADDR_WIDTH - 4);
+        write_address := to_unsigned(0, C_S_AXI_ADDR_WIDTH - 6) & to_unsigned(2, 2) & to_unsigned(0, 4);
         axilite_write(write_address, write_data, "write instruction");
 
         -- Matrix multiply
         write_data := std_logic_vector(to_unsigned(0, 15)) & std_logic_vector(to_unsigned(SIZE, 15)) & std_logic_vector(to_unsigned(1, 2));
-        write_address := to_unsigned(2, 2) & to_unsigned(0, 2) & to_unsigned(0, C_S_AXI_ADDR_WIDTH - 4);
+        write_address := to_unsigned(0, C_S_AXI_ADDR_WIDTH - 6) & to_unsigned(2, 2) & to_unsigned(0, 4);
         axilite_write(write_address, write_data, "write instruction");
 
         wait for CLK_PERIOD * 500;
@@ -165,7 +165,7 @@ begin
         -- Read accumulator data
         for i in 0 to (SIZE - 1) loop
             for j in 0 to (BLOCKS - 1) loop
-                read_address := to_unsigned(0, 2) & to_unsigned(j, 2) & to_unsigned((i + SIZE) * BLOCKS, C_S_AXI_ADDR_WIDTH - 4);
+                read_address := to_unsigned(i + SIZE, C_S_AXI_ADDR_WIDTH - 6) & to_unsigned(0, 2) & to_unsigned(j, 2) & "00";
                 axilite_read(read_address, read_data, "Read unified, address: " & integer'image(to_integer(to_unsigned(i, C_S_AXI_ADDR_WIDTH - 2))) & ", offset: " & integer'image(j));
             end loop;
         end loop;

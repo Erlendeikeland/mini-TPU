@@ -33,7 +33,8 @@ architecture behave of weight_buffer is
     --attribute ram_style : string;
     --attribute ram_style of RAM : variable is "block";
     
-    signal port_1_read_data_reg : weight_array;
+    signal port_1_read_data_reg_0 : weight_array;
+    signal port_1_read_data_reg_1 : weight_array;
 
 begin
 
@@ -55,12 +56,18 @@ begin
         if rising_edge(clk) then
             if port_1_enable = '1' then
                 for i in 0 to (WIDTH - 1) loop
-                    port_1_read_data_reg(i) <= RAM(port_1_read_address)((i * DATA_WIDTH + (DATA_WIDTH - 1)) downto (i * DATA_WIDTH));
+                    port_1_read_data_reg_0(i) <= RAM(port_1_read_address)((i * DATA_WIDTH + (DATA_WIDTH - 1)) downto (i * DATA_WIDTH));
                 end loop;
             end if;
         end if;
     end process;
 
-    port_1_read_data <= port_1_read_data_reg;
+    process (clk)
+    begin
+        if rising_edge(clk) then
+            port_1_read_data_reg_1 <= port_1_read_data_reg_0;
+            port_1_read_data <= port_1_read_data_reg_1;
+        end if;
+    end process;
 
 end architecture;
