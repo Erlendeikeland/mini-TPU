@@ -178,7 +178,6 @@ begin
 
         unified_buffer_port_0_enable <= '0';
         unified_buffer_port_0_write_enable <= '0';
-        --unified_buffer_port_0_write_address <= 0;
 
         for i in 0 to (SIZE - 1) loop
             if systolic_enable_shift(i) = '1' then
@@ -197,7 +196,6 @@ begin
             if systolic_enable_shift(i + DELAY_3) = '1' then
                 unified_buffer_port_0_enable <= '1';
                 unified_buffer_port_0_write_enable <= '1';
-                --unified_buffer_port_0_write_address <= to_integer(unsigned(op_reg_2(16 downto 2))) + i;
             end if;
         end loop;
     end process;

@@ -46,8 +46,10 @@ architecture behave of unified_buffer is
     signal address_0 : natural range 0 to (DEPTH - 1);
     signal address_1 : natural range 0 to (DEPTH - 1);
 
-    signal master_read_data_reg : data_array;
-    signal port_1_read_data_reg : data_array;
+    signal master_read_data_reg_0 : data_array;
+    signal master_read_data_reg_1 : data_array;
+    signal port_1_read_data_reg_0 : data_array;
+    signal port_1_read_data_reg_1 : data_array;
 
 begin
 
@@ -76,7 +78,7 @@ begin
                     end loop;
                 end if;
                 for i in 0 to (WIDTH - 1) loop
-                    master_read_data_reg(i) <= RAM(address_1)(i * DATA_WIDTH + (DATA_WIDTH - 1) downto i * DATA_WIDTH);
+                    master_read_data_reg_0(i) <= RAM(address_1)(i * DATA_WIDTH + (DATA_WIDTH - 1) downto i * DATA_WIDTH);
                 end loop;
             end if;
         end if;
@@ -85,7 +87,8 @@ begin
     process (clk)
     begin
         if rising_edge(clk) then
-            master_read_data <= master_read_data_reg;
+            master_read_data_reg_1 <= master_read_data_reg_0;
+            master_read_data <= master_read_data_reg_1;
         end if;
     end process;
 
@@ -99,7 +102,7 @@ begin
                     end loop;
                 end if;
                 for i in 0 to (WIDTH - 1) loop
-                    port_1_read_data_reg(i) <= RAM(address_1)(i * DATA_WIDTH + (DATA_WIDTH - 1) downto i * DATA_WIDTH);
+                    port_1_read_data_reg_0(i) <= RAM(address_1)(i * DATA_WIDTH + (DATA_WIDTH - 1) downto i * DATA_WIDTH);
                 end loop;
             end if;
         end if;
@@ -108,7 +111,8 @@ begin
     process (clk)
     begin
         if rising_edge(clk) then
-            port_1_read_data <= port_1_read_data_reg;
+            port_1_read_data_reg_1 <= port_1_read_data_reg_0;
+            port_1_read_data <= port_1_read_data_reg_1;
         end if;
     end process;
 
