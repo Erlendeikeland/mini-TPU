@@ -168,9 +168,6 @@ begin
                         if S_AXI_BREADY = '1' then
                             state <= IDLE;
                         end if;
-
-                    when others =>
-                        null;
                 end case;
             end if;
         end if;
