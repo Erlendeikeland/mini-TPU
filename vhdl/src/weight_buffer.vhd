@@ -9,7 +9,8 @@ use work.minitpu_pkg.all;
 entity weight_buffer is
     generic (
         WIDTH : natural;
-        DEPTH : natural
+        DEPTH : natural;
+        PIPELINE_STAGES : natural range 1 to integer'high
     );
     port (
         clk : in std_logic;
@@ -33,8 +34,10 @@ architecture behave of weight_buffer is
     --attribute ram_style : string;
     --attribute ram_style of RAM : variable is "block";
     
-    signal port_1_read_data_reg_0 : weight_array;
-    signal port_1_read_data_reg_1 : weight_array;
+    signal temp_data : weight_array;
+    
+    type pipeline_t is array(0 to (PIPELINE_STAGES - 2)) of weight_array;
+    signal pipeline : pipeline_t;
 
 begin
 
@@ -56,18 +59,26 @@ begin
         if rising_edge(clk) then
             if port_1_enable = '1' then
                 for i in 0 to (WIDTH - 1) loop
-                    port_1_read_data_reg_0(i) <= RAM(port_1_read_address)((i * DATA_WIDTH + (DATA_WIDTH - 1)) downto (i * DATA_WIDTH));
+                    temp_data(i) <= RAM(port_1_read_address)((i * DATA_WIDTH + (DATA_WIDTH - 1)) downto (i * DATA_WIDTH));
                 end loop;
             end if;
         end if;
     end process;
 
-    process (clk)
-    begin
-        if rising_edge(clk) then
-            port_1_read_data_reg_1 <= port_1_read_data_reg_0;
-            port_1_read_data <= port_1_read_data_reg_1;
-        end if;
-    end process;
+    pipeline_gen : if PIPELINE_STAGES = 1 generate
+        port_1_read_data <= temp_data;
+    else generate
+        process (clk)
+        begin
+            if rising_edge(clk) then
+                pipeline(0) <= temp_data;
+                for i in 1 to (PIPELINE_STAGES - 2) loop
+                    pipeline(i) <= pipeline(i - 1);
+                end loop;
+            end if;
+        end process;
+        
+        port_1_read_data <= pipeline(PIPELINE_STAGES - 2);
+    end generate;
 
 end architecture;

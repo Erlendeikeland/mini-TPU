@@ -2,16 +2,19 @@
 
 
 
-# RAM 128 bits line
-# axi lite transfer 32 bits
+import numpy as np
 
-def is_4byte_aligned(addr):
-    return addr % 4 == 0
+SIZE = 8
 
+matrix_a = np.zeros((SIZE, SIZE), dtype=int)
+matrix_b = np.zeros((SIZE, SIZE), dtype=int)
 
+for i in range(SIZE):
+    for j in range(SIZE):
+        matrix_a[i][j] = i % (j + 1)
+        matrix_b[i][j] = i % (j + 1)
 
-print(is_4byte_aligned(0x0))
-print(is_4byte_aligned(0x4))
-print(is_4byte_aligned(0x8))
-print(is_4byte_aligned(0xC))
+matrix_c = np.dot(matrix_a, matrix_b)
 
+for i in range(SIZE):
+    print(f"        ({", ".join([str(x) for x in matrix_c[i]])}),")

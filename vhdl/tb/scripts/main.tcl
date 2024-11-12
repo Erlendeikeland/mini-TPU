@@ -24,7 +24,7 @@ if {![file exists $work_path]} {
     file mkdir $work_path
 } else {
     foreach file [glob -nocomplain -directory $work_path *] {
-        file delete -force $file
+        #file delete -force $file
     }
 }
 

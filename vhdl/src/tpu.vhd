@@ -98,7 +98,8 @@ begin
     weight_buffer_inst: entity work.weight_buffer
         generic map(
             WIDTH => SIZE,
-            DEPTH => WEIGHT_BUFFER_DEPTH
+            DEPTH => WEIGHT_BUFFER_DEPTH,
+            PIPELINE_STAGES => WEIGHT_BUFFER_READ_DELAY
         )
         port map(
             clk => clk,
@@ -114,7 +115,8 @@ begin
     unified_buffer_inst: entity work.unified_buffer
         generic map(
             WIDTH => SIZE,
-            DEPTH => UNIFIED_BUFFER_DEPTH
+            DEPTH => UNIFIED_BUFFER_DEPTH,
+            PIPELINE_STAGES => UNIFIED_BUFFER_READ_DELAY 
         )
         port map(
             clk => clk,
