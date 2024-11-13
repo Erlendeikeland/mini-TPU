@@ -65,9 +65,18 @@ architecture behave of S00_AXI is
     signal write_enable : std_logic;
 
     signal write_data_reg : std_logic_vector(((DATA_WIDTH * SIZE) - 1) downto 0);
-    signal write_address_reg : std_logic_vector((C_S_AXI_ADDR_WIDTH - 1) downto 0);
+    signal write_address_reg : std_logic_vector(19 downto 4);
     signal read_address_reg : std_logic_vector((C_S_AXI_ADDR_WIDTH - 1) downto 0);
-    signal last_address : std_logic_vector((C_S_AXI_ADDR_WIDTH - 1 - 6) downto 0);
+    signal last_address : std_logic_vector(19 downto 6);
+
+    signal write_data_reg_0 : std_logic_vector(((DATA_WIDTH * SIZE) - 1) downto 0);
+    signal write_data_reg_1 : std_logic_vector(((DATA_WIDTH * SIZE) - 1) downto 0);
+
+    signal write_address_reg_0 : std_logic_vector(19 downto 4);
+    signal write_address_reg_1 : std_logic_vector(19 downto 4);
+
+    signal write_enable_reg_0 : std_logic;
+    signal write_enable_reg_1 : std_logic;
 
 begin
 
@@ -108,7 +117,7 @@ begin
                             state <= READ_ADDRESS;
                             read_address_reg <= S_AXI_ARADDR;
                         elsif S_AXI_AWVALID = '1' and S_AXI_ARVALID = '0' then
-                            write_address_reg <= S_AXI_AWADDR;
+                            write_address_reg <= S_AXI_AWADDR(19 downto 4);
                             if (S_AXI_AWADDR(5 downto 4) = "00") or (S_AXI_AWADDR(5 downto 4) = "01") then
                                 write_index := to_integer(unsigned(S_AXI_AWADDR(3 downto 2)));
                                 write_data_reg(((write_index * C_S_AXI_DATA_WIDTH) + (C_S_AXI_DATA_WIDTH - 1)) downto (write_index * C_S_AXI_DATA_WIDTH)) <= S_AXI_WDATA;
@@ -151,6 +160,7 @@ begin
                             if write_address_reg(19 downto 6) = last_address then
                                 if count = (BLOCKS - 2) then
                                     write_enable <= '1';
+                                    write_address_reg <= write_address_reg(19 downto 4);
                                     count := 0;
                                 else
                                     count := count + 1;
@@ -189,29 +199,43 @@ begin
     S_AXI_RVALID <= '1' when state = READ_DATA else '0';
     S_AXI_RRESP <= "00";
 
-    unified_buffer_master_enable <= '1' when (write_enable = '1' and (write_address_reg(5 downto 4) = "00")) or read_enable = '1' else '0';
-    unified_buffer_master_write_enable <= '1' when (write_enable = '1') and (write_address_reg(5 downto 4) = "00") else '0';
-
-    unified_buffer_master_write_address <= to_integer(unsigned(write_address_reg(19 downto 6)));
+    unified_buffer_master_enable <= '1' when (write_enable_reg_1 = '1' and (write_address_reg_1(5 downto 4) = "00")) or read_enable = '1' else '0';
+    unified_buffer_master_write_enable <= '1' when (write_enable_reg_1 = '1') and (write_address_reg_1(5 downto 4) = "00") else '0';
+    unified_buffer_master_write_address <= to_integer(unsigned(write_address_reg_1(19 downto 6)));
+    
     unified_buffer_master_read_address <= to_integer(unsigned(read_address_reg(19 downto 6)));
 
-    weight_buffer_port_0_enable <= '1' when (write_enable = '1') and (write_address_reg(5 downto 4) = "01") else '0';
-    weight_buffer_port_0_write_enable <= '1' when (write_enable = '1') and (write_address_reg(5 downto 4) = "01") else '0';
-    weight_buffer_port_0_write_address <= to_integer(unsigned(write_address_reg(19 downto 6)));
+    weight_buffer_port_0_enable <= '1' when (write_enable_reg_1 = '1') and (write_address_reg_1(5 downto 4) = "01") else '0';
+    weight_buffer_port_0_write_enable <= '1' when (write_enable_reg_1 = '1') and (write_address_reg_1(5 downto 4) = "01") else '0';
+    weight_buffer_port_0_write_address <= to_integer(unsigned(write_address_reg_1(19 downto 6)));
 
-    fifo_write_enable <= '1' when write_enable = '1' and write_address_reg(5 downto 4) = "10" else '0';
+    fifo_write_enable <= '1' when write_enable_reg_1 = '1' and write_address_reg_1(5 downto 4) = "10" else '0';
 
     process (all)
     begin
         for i in 0 to (SIZE - 1) loop
-            unified_buffer_master_write_data(i) <= write_data_reg(((i * 8) + 7) downto (i * 8));
+            unified_buffer_master_write_data(i) <= write_data_reg_1(((i * 8) + 7) downto (i * 8));
         end loop;
 
         for i in 0 to (SIZE - 1) loop
-            weight_buffer_port_0_write_data(i) <= write_data_reg(((i * 8) + 7) downto (i * 8));
+            weight_buffer_port_0_write_data(i) <= write_data_reg_1(((i * 8) + 7) downto (i * 8));
         end loop;
 
-        fifo_write_data <= write_data_reg(31 downto 0);
+        fifo_write_data <= write_data_reg_1(31 downto 0);
+    end process;
+
+    process (S_AXI_ACLK)
+    begin
+        if rising_edge(S_AXI_ACLK) then
+            write_data_reg_0 <= write_data_reg;
+            write_data_reg_1 <= write_data_reg_0;
+
+            write_address_reg_0 <= write_address_reg(19 downto 4);
+            write_address_reg_1 <= write_address_reg_0;
+
+            write_enable_reg_0 <= write_enable;
+            write_enable_reg_1 <= write_enable_reg_0;
+        end if;
     end process;
 
 end;

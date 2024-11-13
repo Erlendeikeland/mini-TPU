@@ -21,8 +21,6 @@ architecture behave of systolic_data_setup is
     type data_array_2d is array (1 to (MATRIX_WIDTH - 1), 1 to (MATRIX_WIDTH - 1)) of std_logic_vector((DATA_WIDTH - 1) downto 0);
     signal data_reg : data_array_2d;
 
-    signal data_out_reg : data_array;
-
 begin
 
     process(clk)
