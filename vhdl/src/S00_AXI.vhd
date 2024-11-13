@@ -237,5 +237,4 @@ begin
             write_enable_reg_1 <= write_enable_reg_0;
         end if;
     end process;
-
 end;
