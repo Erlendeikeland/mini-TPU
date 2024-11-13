@@ -67,6 +67,7 @@ architecture behave of S00_AXI is
     signal write_data_reg : std_logic_vector(((DATA_WIDTH * SIZE) - 1) downto 0);
     signal write_address_reg : std_logic_vector((C_S_AXI_ADDR_WIDTH - 1) downto 0);
     signal read_address_reg : std_logic_vector((C_S_AXI_ADDR_WIDTH - 1) downto 0);
+    signal last_address : std_logic_vector((C_S_AXI_ADDR_WIDTH - 1 - 6) downto 0);
 
 begin
 
@@ -108,11 +109,12 @@ begin
                             read_address_reg <= S_AXI_ARADDR;
                         elsif S_AXI_AWVALID = '1' and S_AXI_ARVALID = '0' then
                             write_address_reg <= S_AXI_AWADDR;
-                            write_index := to_integer(unsigned(S_AXI_AWADDR(3 downto 2)));
-                            write_data_reg(((write_index * C_S_AXI_DATA_WIDTH) + (C_S_AXI_DATA_WIDTH - 1)) downto (write_index * C_S_AXI_DATA_WIDTH)) <= S_AXI_WDATA;
                             if (S_AXI_AWADDR(5 downto 4) = "00") or (S_AXI_AWADDR(5 downto 4) = "01") then
+                                write_index := to_integer(unsigned(S_AXI_AWADDR(3 downto 2)));
+                                write_data_reg(((write_index * C_S_AXI_DATA_WIDTH) + (C_S_AXI_DATA_WIDTH - 1)) downto (write_index * C_S_AXI_DATA_WIDTH)) <= S_AXI_WDATA;
                                 state <= WRITE_ADDRESS;
                             elsif (S_AXI_AWADDR(5 downto 4) = "10") then
+                                write_data_reg(31 downto 0) <= S_AXI_WDATA;
                                 state <= WRITE_FIFO;
                             end if;
                         end if;
@@ -146,12 +148,17 @@ begin
                     when WRITE_ADDRESS =>
                         if S_AXI_WVALID = '1' then
                             state <= WRITE_DATA_WAIT;
-                            if count = (BLOCKS - 1) then
-                                write_enable <= '1';
-                                count := 0;
+                            if write_address_reg(19 downto 6) = last_address then
+                                if count = (BLOCKS - 2) then
+                                    write_enable <= '1';
+                                    count := 0;
+                                else
+                                    count := count + 1;
+                                end if;
                             else
-                                count := count + 1;
+                                count := 0;
                             end if;
+                            last_address <= write_address_reg(19 downto 6);
                         end if;
 
                     when WRITE_FIFO =>
