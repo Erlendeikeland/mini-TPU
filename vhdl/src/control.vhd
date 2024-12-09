@@ -34,7 +34,7 @@ end entity control;
 
 architecture behave of control is
 
-    type state_t is (IDLE, RUNNING);
+    type state_t is (IDLE, DECODE, RUNNING);
     signal state : state_t;
 
     signal op_reg_0 : op_t;
@@ -44,13 +44,21 @@ architecture behave of control is
     signal weight_buffer_count : natural range 0 to (WEIGHT_BUFFER_DEPTH - 1);
     signal weight_buffer_count_enable : std_logic;
 
+    signal accumulator_write_count : natural range 0 to (ACCUMULATOR_DEPTH - 1);
+    signal accumulator_write_count_enable : std_logic;
+    signal accumulator_write_enable_enable : std_logic;
+    
+    signal accumulator_read_count : natural range 0 to (ACCUMULATOR_DEPTH - 1);
+    signal accumulator_read_count_enable : std_logic;
+
     signal unified_buffer_read_count : natural range 0 to (UNIFIED_BUFFER_DEPTH - 1);
     signal unified_buffer_read_count_enable : std_logic;
+    signal unified_buffer_read_enable_enable : std_logic;
 
     signal unified_buffer_write_count : natural range 0 to (UNIFIED_BUFFER_DEPTH - 1);
     signal unified_buffer_write_count_enable : std_logic;
+    signal unified_buffer_write_enable_enable : std_logic;
     
-
     signal systolic_enable_shift : std_logic_vector(((SIZE - 1) + DELAY_3) downto 0);
     signal systolic_enable : std_logic;
     signal weight_buffer_enable_shift : std_logic_vector(((SIZE - 1) + WEIGHT_BUFFER_READ_DELAY) downto 0);
@@ -72,23 +80,24 @@ begin
                 case state is
                     when IDLE =>
                         if fifo_empty = '0' then
-                            if fifo_read_data(1 downto 0) = LOAD_WEIGHTS then
-                                if systolic_busy = '0' then
-                                    state <= RUNNING;
-                                    fifo_read_enable <= '1';
-                                    op_reg_0 <= fifo_read_data;
-                                    weight_buffer_enable <= '1';
-                                end if;
-                            elsif fifo_read_data(1 downto 0) = MATRIX_MULTIPLY then
-                                state <= RUNNING;
-                                fifo_read_enable <= '1';
-                                op_reg_0 <= fifo_read_data;
-                                systolic_enable <= '1';
-                            end if;
+                            state <= DECODE;
+                            fifo_read_enable <= '1';
+                            op_reg_0 <= fifo_read_data;
                         end if;
-
-                    when RUNNING =>
+                    
+                    when DECODE =>
                         fifo_read_enable <= '0';
+                        if op_reg_0(1 downto 0) = LOAD_WEIGHTS then
+                            if systolic_busy = '0' then
+                                state <= RUNNING;
+                                weight_buffer_enable <= '1';
+                            end if;
+                        elsif op_reg_0(1 downto 0) = MATRIX_MULTIPLY then
+                            state <= RUNNING;
+                            systolic_enable <= '1';
+                        end if;
+                        
+                    when RUNNING =>
                         systolic_enable <= '0';
                         weight_buffer_enable <= '0';
 
@@ -166,39 +175,76 @@ begin
     weight_buffer_count_enable <= or weight_buffer_enable_shift((SIZE - 2) downto 0);
     weight_buffer_port_1_read_address <= weight_buffer_count;
 
-    process (all)
+    accumulator_accumulate <= '0';
+
+    process (clk)
     begin
-        unified_buffer_port_1_enable <= '0';
-
-        accumulator_accumulate <= '0';
-        accumulator_write_address <= 0;
-        accumulator_write_enable <= '0';
-
-        accumulator_read_address <= 0;
-
-        unified_buffer_port_0_enable <= '0';
-        unified_buffer_port_0_write_enable <= '0';
-
-        for i in 0 to (SIZE - 1) loop
-            if systolic_enable_shift(i) = '1' then
-                unified_buffer_port_1_enable <= '1';
-            end if;
-
-            if systolic_enable_shift(i + DELAY_1) = '1' then
-                accumulator_write_enable <= '1';
-                accumulator_write_address <= i;
-            end if;
-
-            if systolic_enable_shift(i + DELAY_2) = '1' then
-                accumulator_read_address <= i;
-            end if;
-
-            if systolic_enable_shift(i + DELAY_3) = '1' then
+        if rising_edge(clk) then
+            if unified_buffer_write_enable_enable = '1' then
                 unified_buffer_port_0_enable <= '1';
                 unified_buffer_port_0_write_enable <= '1';
+            else
+                unified_buffer_port_0_enable <= '0';
+                unified_buffer_port_0_write_enable <= '0';
             end if;
-        end loop;
+        end if;
     end process;
+
+    unified_buffer_write_enable_enable <= or systolic_enable_shift(DELAY_3 + (SIZE - 2) downto (DELAY_3 - 1));
+
+    process (clk)
+    begin
+        if rising_edge(clk) then
+            if unified_buffer_read_enable_enable = '1' then
+                unified_buffer_port_1_enable <= '1';
+            else
+                unified_buffer_port_1_enable <= '0';
+            end if;
+        end if;
+    end process;
+
+    unified_buffer_read_enable_enable <= or (systolic_enable_shift((SIZE - 2) downto 0) or systolic_enable);
+
+    process (clk)
+    begin
+        if rising_edge(clk) then
+            if accumulator_write_enable_enable = '1' then
+                accumulator_write_enable <= '1';
+            else
+                accumulator_write_enable <= '0';
+            end if;
+        end if;
+    end process;
+
+    accumulator_write_enable_enable <= or systolic_enable_shift(DELAY_1 + (SIZE - 2) downto (DELAY_1 - 1));
+
+    process (clk)
+    begin
+        if rising_edge(clk) then
+            if accumulator_read_count_enable = '1' then
+                accumulator_read_count <= accumulator_read_count + 1;
+            else
+                accumulator_read_count <= 0;
+            end if;
+        end if;
+    end process;
+
+    accumulator_read_count_enable <= or systolic_enable_shift(DELAY_2 + (SIZE - 2) downto DELAY_2);
+    accumulator_read_address <= accumulator_read_count;
+
+    process (clk)
+    begin
+        if rising_edge(clk) then
+            if accumulator_write_count_enable = '1' then
+                accumulator_write_count <= accumulator_write_count + 1;
+            else
+                accumulator_write_count <= 0;
+            end if;
+        end if;
+    end process;
+
+    accumulator_write_count_enable <= or systolic_enable_shift(DELAY_1 + (SIZE - 2) downto DELAY_1);
+    accumulator_write_address <= accumulator_write_count;
 
     process (clk)
     begin

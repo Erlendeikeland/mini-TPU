@@ -19,7 +19,7 @@ architecture behave of axi_tb is
     signal reset : std_logic := '1';
 
     constant C_S_AXI_DATA_WIDTH : integer := 32;
-    constant C_S_AXI_ADDR_WIDTH : integer := 20;
+    constant C_S_AXI_ADDR_WIDTH : integer := 16;
 
     constant BLOCKS : natural := (DATA_WIDTH * SIZE) / C_S_AXI_DATA_WIDTH;
 

@@ -119,13 +119,33 @@ begin
 
         wait for CLK_PERIOD * 5;
 
-        write_data := 32x"22222222";
-        write_address := to_unsigned(2, C_S_AXI_ADDR_WIDTH - 6) & to_unsigned(1, 2) & to_unsigned(0, 2) & "00";
+        write_data := 32x"10203";
+        write_address := to_unsigned(2, C_S_AXI_ADDR_WIDTH - 6) & to_unsigned(0, 2) & to_unsigned(0, 2) & "00";
         axilite_write(write_address, write_data, "Write");
 
-        write_data := 32x"22222222";
-        write_address := to_unsigned(2, C_S_AXI_ADDR_WIDTH - 6) & to_unsigned(1, 2) & to_unsigned(1, 2) & "00";
+        write_data := 32x"4050607";
+        write_address := to_unsigned(2, C_S_AXI_ADDR_WIDTH - 6) & to_unsigned(0, 2) & to_unsigned(1, 2) & "00";
         axilite_write(write_address, write_data, "Write");
+
+        write_data := 32x"8090a0b";
+        write_address := to_unsigned(2, C_S_AXI_ADDR_WIDTH - 6) & to_unsigned(0, 2) & to_unsigned(2, 2) & "00";
+        axilite_write(write_address, write_data, "Write");
+
+        write_data := 32x"c0d0e0f";
+        write_address := to_unsigned(2, C_S_AXI_ADDR_WIDTH - 6) & to_unsigned(0, 2) & to_unsigned(3, 2) & "00";
+        axilite_write(write_address, write_data, "Write");
+
+        read_address := to_unsigned(2, C_S_AXI_ADDR_WIDTH - 6) & to_unsigned(0, 2) & to_unsigned(0, 2) & "00";
+        axilite_read(read_address, read_data, "Read");
+
+        read_address := to_unsigned(2, C_S_AXI_ADDR_WIDTH - 6) & to_unsigned(0, 2) & to_unsigned(1, 2) & "00";
+        axilite_read(read_address, read_data, "Read");
+
+        read_address := to_unsigned(2, C_S_AXI_ADDR_WIDTH - 6) & to_unsigned(0, 2) & to_unsigned(2, 2) & "00";
+        axilite_read(read_address, read_data, "Read");
+
+        read_address := to_unsigned(2, C_S_AXI_ADDR_WIDTH - 6) & to_unsigned(0, 2) & to_unsigned(3, 2) & "00";
+        axilite_read(read_address, read_data, "Read");
 
         wait for CLK_PERIOD * 20;
         stop;
