@@ -9,7 +9,7 @@ use std.textio.all;
 package minitpu_pkg is
 
     -- SYSTOLIC ARRAY --
-    constant SIZE : natural := 16;
+    constant SIZE : natural := 8;
 
     -- Data interface
     constant DATA_WIDTH : natural := 8;
@@ -35,7 +35,7 @@ package minitpu_pkg is
         
     function get_accum_width(row : natural) return natural;
         
-    constant MAX_ACCUM_WIDTH : natural := 20;
+    constant MAX_ACCUM_WIDTH : natural := 19;
     type output_array is array(0 to (SIZE - 1)) of std_logic_vector((MAX_ACCUM_WIDTH - 1) downto 0);
 
 
@@ -48,7 +48,7 @@ package minitpu_pkg is
     constant UNIFIED_BUFFER_READ_DELAY : natural := 1;
     constant SYSTOLIC_SETUP_DELAY : natural := 1;
     constant SYSTOLIC_ARRAY_DELAY : natural := SIZE + 1;
-    constant ACCUMULATOR_DELAY : natural := SIZE - 1;
+    constant ACCUMULATOR_DELAY : natural := SIZE - 2;
     constant ACCUMULATOR_READ_DELAY : natural := 2;
 
     constant DELAY_0 : natural := UNIFIED_BUFFER_READ_DELAY;

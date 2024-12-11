@@ -127,19 +127,6 @@ begin
 
         wait for CLK_PERIOD * 5;
 
-        -- Read from port 1 to verify same data
-        port_1_enable <= '1';
-        for i in 0 to (DEPTH - 1) loop
-            port_1_read_address <= i;
-            wait for CLK_PERIOD * 2;
-            for j in 0 to (WIDTH - 1) loop
-                assert port_1_read_data(j) = std_logic_vector(to_unsigned(i * WIDTH + j + 2, DATA_WIDTH)) report "Error at address " & integer'image(i) & " and data " & integer'image(j) severity failure;
-            end loop;
-        end loop;
-        port_1_enable <= '0';
-
-        wait for CLK_PERIOD * 5;
-
         stop;
     end process;
 

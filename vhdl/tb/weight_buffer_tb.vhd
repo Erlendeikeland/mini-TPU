@@ -16,7 +16,7 @@ architecture behave of weight_buffer_tb is
     constant WIDTH : natural := 8;
     constant DEPTH : natural := 8;
 
-    constant PIPELINE_STAGES : natural := 2;
+    constant PIPELINE_STAGES : natural := 1;
 
     signal port_0_enable : std_logic := '0';
     signal port_0_write_address : natural := 0;

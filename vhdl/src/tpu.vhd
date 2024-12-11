@@ -49,12 +49,8 @@ architecture behave of tpu is
     signal systolic_array_weight_address : natural range 0 to (SIZE - 1);
     signal systolic_array_weight_enable : std_logic;
     
-    signal accumulator_accumulate : std_logic;
-    signal accumulator_write_address : natural range 0 to (ACCUMULATOR_DEPTH - 1);
-    signal accumulator_write_enable : std_logic;
-    signal accumulator_read_address : natural range 0 to (ACCUMULATOR_DEPTH - 1);
-    signal accumulator_read_data : output_array;
-    signal accumulator_read_data_cropped : data_array;
+    signal accumulator_data_out : output_array;
+    signal accumulator_data_out_cropped : data_array;
 
 begin
 
@@ -88,11 +84,7 @@ begin
             unified_buffer_port_1_enable => unified_buffer_port_1_enable,
             unified_buffer_port_1_read_address => unified_buffer_port_1_read_address,
             systolic_array_weight_address => systolic_array_weight_address,
-            systolic_array_weight_enable => systolic_array_weight_enable,
-            accumulator_accumulate => accumulator_accumulate,
-            accumulator_write_address => accumulator_write_address,
-            accumulator_write_enable => accumulator_write_enable,
-            accumulator_read_address => accumulator_read_address
+            systolic_array_weight_enable => systolic_array_weight_enable
         );
 
     weight_buffer_inst: entity work.weight_buffer
@@ -129,7 +121,7 @@ begin
             port_0_enable => unified_buffer_port_0_enable,
             port_0_write_address => unified_buffer_port_0_write_address,
             port_0_write_enable => unified_buffer_port_0_write_enable,
-            port_0_write_data => accumulator_read_data_cropped, --
+            port_0_write_data => accumulator_data_out_cropped, --
             port_1_enable => unified_buffer_port_1_enable,
             port_1_read_address => unified_buffer_port_1_read_address,
             port_1_read_data => unified_buffer_port_1_read_data --
@@ -162,18 +154,14 @@ begin
         )
         port map(
             clk => clk,
-            accumulate => accumulator_accumulate,
-            write_address => accumulator_write_address,
-            write_enable => accumulator_write_enable,
-            write_data => systolic_array_data_out, --
-            read_address => accumulator_read_address,
-            read_data => accumulator_read_data --
+            data_in => systolic_array_data_out, --
+            data_out => accumulator_data_out --
         );
 
     process (all)
     begin
         for i in 0 to (SIZE - 1) loop
-            accumulator_read_data_cropped(i) <= accumulator_read_data(i)((DATA_WIDTH - 1) downto 0);
+            accumulator_data_out_cropped(i) <= accumulator_data_out(i)((DATA_WIDTH - 1) downto 0);
         end loop;
     end process;
 

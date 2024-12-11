@@ -23,12 +23,7 @@ entity control is
         unified_buffer_port_1_read_address : out natural range 0 to (UNIFIED_BUFFER_DEPTH - 1);
         
         systolic_array_weight_address : out natural range 0 to (SIZE - 1);
-        systolic_array_weight_enable : out std_logic;
-        
-        accumulator_accumulate : out std_logic;
-        accumulator_write_address : out natural range 0 to (ACCUMULATOR_DEPTH - 1);
-        accumulator_write_enable : out std_logic;
-        accumulator_read_address : out natural range 0 to (ACCUMULATOR_DEPTH - 1)
+        systolic_array_weight_enable : out std_logic
     );
 end entity control;
 
@@ -43,13 +38,6 @@ architecture behave of control is
 
     signal weight_buffer_count : natural range 0 to (WEIGHT_BUFFER_DEPTH - 1);
     signal weight_buffer_count_enable : std_logic;
-
-    signal accumulator_write_count : natural range 0 to (ACCUMULATOR_DEPTH - 1);
-    signal accumulator_write_count_enable : std_logic;
-    signal accumulator_write_enable_enable : std_logic;
-    
-    signal accumulator_read_count : natural range 0 to (ACCUMULATOR_DEPTH - 1);
-    signal accumulator_read_count_enable : std_logic;
 
     signal unified_buffer_read_count : natural range 0 to (UNIFIED_BUFFER_DEPTH - 1);
     signal unified_buffer_read_count_enable : std_logic;
@@ -175,8 +163,6 @@ begin
     weight_buffer_count_enable <= or weight_buffer_enable_shift((SIZE - 2) downto 0);
     weight_buffer_port_1_read_address <= weight_buffer_count;
 
-    accumulator_accumulate <= '0';
-
     process (clk)
     begin
         if rising_edge(clk) then
@@ -208,47 +194,6 @@ begin
     process (clk)
     begin
         if rising_edge(clk) then
-            if accumulator_write_enable_enable = '1' then
-                accumulator_write_enable <= '1';
-            else
-                accumulator_write_enable <= '0';
-            end if;
-        end if;
-    end process;
-
-    accumulator_write_enable_enable <= or systolic_enable_shift(DELAY_1 + (SIZE - 2) downto (DELAY_1 - 1));
-
-    process (clk)
-    begin
-        if rising_edge(clk) then
-            if accumulator_read_count_enable = '1' then
-                accumulator_read_count <= accumulator_read_count + 1;
-            else
-                accumulator_read_count <= 0;
-            end if;
-        end if;
-    end process;
-
-    accumulator_read_count_enable <= or systolic_enable_shift(DELAY_2 + (SIZE - 2) downto DELAY_2);
-    accumulator_read_address <= accumulator_read_count;
-
-    process (clk)
-    begin
-        if rising_edge(clk) then
-            if accumulator_write_count_enable = '1' then
-                accumulator_write_count <= accumulator_write_count + 1;
-            else
-                accumulator_write_count <= 0;
-            end if;
-        end if;
-    end process;
-
-    accumulator_write_count_enable <= or systolic_enable_shift(DELAY_1 + (SIZE - 2) downto DELAY_1);
-    accumulator_write_address <= accumulator_write_count;
-
-    process (clk)
-    begin
-        if rising_edge(clk) then
             if unified_buffer_read_count_enable = '1' then
                 unified_buffer_read_count <= unified_buffer_read_count + 1;
             elsif systolic_enable = '1' then
@@ -276,7 +221,7 @@ begin
 
     process (all)
     begin
-        for i in 0 to ((SIZE * 2) - 5) loop
+        for i in 0 to ((SIZE * 2) - 4) loop
             if systolic_enable_shift(i) = '1' then
                 systolic_busy <= '1';
                 exit;

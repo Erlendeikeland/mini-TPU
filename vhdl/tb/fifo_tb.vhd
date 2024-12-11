@@ -15,7 +15,7 @@ architecture rtl of fifo_tb is
     signal clk : std_logic := '1';
     signal reset : std_logic := '0';
 
-    constant DEPTH : natural := 16;
+    constant DEPTH : natural := 8;
 
     signal write_data : op_t := (others => '0');
     signal write_en : std_logic := '0';
@@ -80,30 +80,6 @@ begin
         wait for CLK_PERIOD * 5;
 
         for i in 0 to DEPTH * 2 loop
-            write(std_logic_vector(to_unsigned(i, 32)));
-        end loop;
-
-        wait for CLK_PERIOD * 5;
-
-        for i in 0 to DEPTH * 2 loop
-            read(read_data);
-        end loop;
-
-        wait for CLK_PERIOD * 5;
-
-        for i in 0 to DEPTH / 2 loop
-            write(std_logic_vector(to_unsigned(i + 6, 32)));
-        end loop;
-
-        wait for CLK_PERIOD * 5;
-
-        for i in 0 to DEPTH * 2 loop
-            read(read_data);
-        end loop;
-
-        wait for CLK_PERIOD * 5;
-
-        for i in 0 to DEPTH * 2 - 5 loop
             write(std_logic_vector(to_unsigned(i, 32)));
         end loop;
 

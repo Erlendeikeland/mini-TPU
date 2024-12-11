@@ -111,3 +111,25 @@ for i in range(32):
         print(sw_results[i])
         print("Mismatch at index: ", i)
         break
+
+
+
+
+
+
+
+"""
+
+
+32 * (16 * 4 * (32))
+
+
+
+0.6032812595367432
+
+
+
+
+
+
+"""

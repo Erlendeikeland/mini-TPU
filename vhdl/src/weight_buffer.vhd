@@ -31,9 +31,6 @@ architecture behave of weight_buffer is
     type RAM_t is array(0 to (DEPTH - 1)) of std_logic_vector(((DATA_WIDTH * WIDTH) - 1) downto 0);
     shared variable RAM : RAM_t;
 
-    --attribute ram_style : string;
-    --attribute ram_style of RAM : variable is "block";
-    
     signal temp_data : weight_array;
     
     type pipeline_t is array(0 to (PIPELINE_STAGES - 2)) of weight_array;
