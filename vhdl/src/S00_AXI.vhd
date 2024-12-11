@@ -60,17 +60,11 @@ architecture behave of S00_AXI is
     
     type state_t is (
         IDLE,
-        READ_ADDRESS,
-        READ_DATA_WAIT_0,
-        READ_DATA_WAIT_1,
-        READ_DATA_WAIT_2,
         READ_DATA,
-        WRITE_ADDRESS,
+        READ_WAIT,
+        READ_VALID,
         WRITE_FIFO,
-        WRITE_FIFO_WAIT_0,
-        WRITE_FIFO_WAIT_1,
-        WRITE_DATA_WAIT_0,
-        WRITE_DATA_WAIT_1,
+        WRITE_VALID,
         WRITE_DATA
     );
     signal state : state_t;
@@ -78,7 +72,6 @@ architecture behave of S00_AXI is
     signal axi_data : std_logic_vector((C_S_AXI_DATA_WIDTH - 1) downto 0);
     signal axi_address : std_logic_vector((C_S_AXI_ADDR_WIDTH - 1) downto 0);
 
-    signal write_data_reg : data_array;
     signal write_fifo_reg : std_logic_vector((C_S_AXI_DATA_WIDTH - 1) downto 0);
 
     signal last_address : std_logic_vector(15 downto 6);
@@ -110,8 +103,10 @@ begin
         );
     
     process (S_AXI_ACLK)
-        variable read_wait : natural range 0 to (UNIFIED_BUFFER_READ_DELAY - 1) + 1;
-        variable count : natural range 0 to (BLOCKS - 1);
+        variable read_count : natural range 0 to (UNIFIED_BUFFER_READ_DELAY - 1) + 1;
+        variable write_count : natural range 0 to (BLOCKS - 1);
+
+        variable write_data_reg : data_array;
     begin
         if rising_edge(S_AXI_ACLK) then
             if S_AXI_ARESETN = '0' then
@@ -121,76 +116,65 @@ begin
                 weight_buffer_port_0_enable <= '0';
                 weight_buffer_port_0_write_enable <= '0';
                 fifo_write_enable <= '0';
-                count := 0;
+                write_count := 0;
             else
                 case state is
                     when IDLE =>
                         if S_AXI_AWVALID = '0' and S_AXI_ARVALID = '1' then
-                            state <= READ_ADDRESS;
+                            state <= READ_DATA;
                             axi_address <= S_AXI_ARADDR;
                         elsif S_AXI_AWVALID = '1' and S_AXI_ARVALID = '0' then
                             axi_address <= S_AXI_AWADDR;
                             axi_data <= S_AXI_WDATA;
                             if (S_AXI_AWADDR(5 downto 4) = "00") or (S_AXI_AWADDR(5 downto 4) = "01") then
-                                state <= WRITE_ADDRESS;
+                                state <= WRITE_DATA;
                             elsif (S_AXI_AWADDR(5 downto 4) = "10") then
                                 state <= WRITE_FIFO;
                             end if;
                         end if;
 
-                    when WRITE_ADDRESS =>
-                        if S_AXI_WVALID = '1' then
-                            state <= WRITE_DATA_WAIT_0;
-                        end if;
-
                     when WRITE_FIFO =>
                         if S_AXI_WVALID = '1' then
-                            state <= WRITE_FIFO_WAIT_0;
+                            fifo_write_enable <= '1';
+                            fifo_write_data <= axi_data;
+                            state <= WRITE_VALID;
                         end if;
 
-                    when WRITE_FIFO_WAIT_0 =>
-                        state <= WRITE_FIFO_WAIT_1;
-                        write_fifo_reg <= axi_data;
-
-                    when WRITE_FIFO_WAIT_1 =>
-                        fifo_write_enable <= '1';
-                        fifo_write_data <= write_fifo_reg;
-                        state <= WRITE_DATA;
-                        
-                    when WRITE_DATA_WAIT_0 =>
-                        state <= WRITE_DATA_WAIT_1;
-                        for i in 0 to 3 loop
-                            write_data_reg(i + (write_offset * 4)) <= axi_data(((i * 8) + 7) downto (i * 8));
-                        end loop;
-
-                    when WRITE_DATA_WAIT_1 =>
-                        state <= WRITE_DATA;
-                        if (axi_address(15 downto 6) = last_address) and (opcode = last_opcode) then
-                            if count = (BLOCKS - 2) then
-                                if opcode = "00" then
-                                    unified_buffer_master_enable <= '1';
-                                    unified_buffer_master_write_enable <= '1';
-                                    unified_buffer_master_write_data <= write_data_reg;
-                                    unified_buffer_master_write_address <= to_integer(unsigned(axi_address(15 downto 6)));
-                                elsif opcode = "01" then
-                                    weight_buffer_port_0_enable <= '1';
-                                    weight_buffer_port_0_write_enable <= '1';
-                                    for i in 0 to (SIZE - 1) loop
-                                        weight_buffer_port_0_write_data(i) <= write_data_reg(i);
-                                    end loop;
-                                    weight_buffer_port_0_write_address <= to_integer(unsigned(axi_address(15 downto 6)));
-                                end if;
-                                count := 0;
-                            else
-                                count := count + 1;
-                            end if;
-                        else
-                            count := 0;
-                        end if;
-                        last_address <= axi_address(15 downto 6);
-                        last_opcode <= opcode;
-                        
                     when WRITE_DATA =>
+                        if S_AXI_WVALID = '1' then
+                            state <= WRITE_VALID;
+
+                            for i in 0 to 3 loop
+                                write_data_reg(i + (write_offset * 4)) := axi_data(((i * 8) + 7) downto (i * 8));
+                            end loop;
+
+                            if (axi_address(15 downto 6) = last_address) and (opcode = last_opcode) then
+                                if write_count = (BLOCKS - 2) then
+                                    if opcode = "00" then
+                                        unified_buffer_master_enable <= '1';
+                                        unified_buffer_master_write_enable <= '1';
+                                        unified_buffer_master_write_data <= write_data_reg;
+                                        unified_buffer_master_write_address <= to_integer(unsigned(axi_address(15 downto 6)));
+                                    elsif opcode = "01" then
+                                        weight_buffer_port_0_enable <= '1';
+                                        weight_buffer_port_0_write_enable <= '1';
+                                        for i in 0 to (SIZE - 1) loop
+                                            weight_buffer_port_0_write_data(i) <= write_data_reg(i);
+                                        end loop;
+                                        weight_buffer_port_0_write_address <= to_integer(unsigned(axi_address(15 downto 6)));
+                                    end if;
+                                    write_count := 0;
+                                else
+                                    write_count := write_count + 1;
+                                end if;
+                            else
+                                write_count := 0;
+                            end if;
+                            last_address <= axi_address(15 downto 6);
+                            last_opcode <= opcode;
+                        end if;
+                        
+                    when WRITE_VALID =>
                         if opcode = "00" then
                             unified_buffer_master_enable <= '0';
                             unified_buffer_master_write_enable <= '0';
@@ -204,32 +188,26 @@ begin
                             state <= IDLE;
                         end if;
 
-                    when READ_ADDRESS =>
-                        if S_AXI_RREADY = '1' then
-                            state <= READ_DATA_WAIT_0;
-                        end if;
-
-                    when READ_DATA_WAIT_0 =>
-                        state <= READ_DATA_WAIT_1;
-                        unified_buffer_master_enable <= '1';
-                        unified_buffer_master_read_address <= to_integer(unsigned(axi_address(15 downto 6)));
-                        read_wait := 0;
-
-                    when READ_DATA_WAIT_1 =>
-                        if read_wait = (UNIFIED_BUFFER_READ_DELAY - 1) + 1 then
-                            state <= READ_DATA_WAIT_2;
-                        else
-                            read_wait := read_wait + 1;
-                        end if;
-
-                    when READ_DATA_WAIT_2 =>
-                        state <= READ_DATA;
-                        unified_buffer_master_enable <= '0';
-                        for i in 0 to 3 loop
-                            S_AXI_RDATA(((i * 8) + 7) downto (i * 8)) <= unified_buffer_master_read_data(i + (read_offset * 4));
-                        end loop;
-
                     when READ_DATA =>
+                        if S_AXI_RREADY = '1' then
+                            state <= READ_WAIT;
+                            unified_buffer_master_enable <= '1';
+                            unified_buffer_master_read_address <= to_integer(unsigned(axi_address(15 downto 6)));
+                            read_count := 0;
+                        end if;
+
+                    when READ_WAIT =>
+                        if read_count = (UNIFIED_BUFFER_READ_DELAY - 1) + 1 then
+                            state <= READ_VALID;
+                            unified_buffer_master_enable <= '0';
+                            for i in 0 to 3 loop
+                                S_AXI_RDATA(((i * 8) + 7) downto (i * 8)) <= unified_buffer_master_read_data(i + (read_offset * 4));
+                            end loop;
+                        else
+                            read_count := read_count + 1;
+                        end if;
+
+                    when READ_VALID =>
                         state <= IDLE;
 
                     when others =>
@@ -241,11 +219,11 @@ begin
 
     S_AXI_AWREADY <= '1' when state = IDLE else '0';
     S_AXI_ARREADY <= '1' when state = IDLE else '0';
-    S_AXI_WREADY <= '1' when (state = WRITE_ADDRESS) or (state = WRITE_FIFO) else '0';
-    S_AXI_BVALID <= '1' when state = WRITE_DATA else '0';
+    S_AXI_WREADY <= '1' when (state = WRITE_DATA) or (state = WRITE_FIFO) else '0';
+    S_AXI_BVALID <= '1' when state = WRITE_VALID else '0';
     S_AXI_BRESP <= "00";
 
-    S_AXI_RVALID <= '1' when state = READ_DATA else '0';
+    S_AXI_RVALID <= '1' when state = READ_VALID else '0';
     S_AXI_RRESP <= "00";
 
     write_offset <= to_integer(unsigned(axi_address(3 downto 2)));
