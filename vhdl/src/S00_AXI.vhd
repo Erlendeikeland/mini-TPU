@@ -72,8 +72,6 @@ architecture behave of S00_AXI is
     signal axi_data : std_logic_vector((C_S_AXI_DATA_WIDTH - 1) downto 0);
     signal axi_address : std_logic_vector((C_S_AXI_ADDR_WIDTH - 1) downto 0);
 
-    signal write_fifo_reg : std_logic_vector((C_S_AXI_DATA_WIDTH - 1) downto 0);
-
     signal last_address : std_logic_vector(15 downto 6);
 
     signal write_offset : natural range 0 to (BLOCKS - 1);

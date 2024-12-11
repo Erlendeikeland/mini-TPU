@@ -13,8 +13,8 @@ architecture behave of unified_buffer_tb is
     constant CLK_PERIOD : time := 10 ns;
     signal clk : std_logic := '1';
 
-    constant WIDTH : natural := 8;
-    constant DEPTH : natural := 8;
+    constant WIDTH : natural := 4;
+    constant DEPTH : natural := 4;
 
     signal master_enable : std_logic := '0';
     signal master_write_address : natural := 0;
@@ -37,7 +37,8 @@ begin
     unified_buffer_inst: entity work.unified_buffer
         generic map(
             WIDTH => WIDTH,
-            DEPTH => DEPTH
+            DEPTH => DEPTH,
+            PIPELINE_STAGES => 1
         )
         port map(
             clk => clk,

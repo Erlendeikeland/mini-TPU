@@ -63,7 +63,7 @@ begin
             write_en <= '0';
         end procedure write;
 
-        variable read_data : op_t;
+        variable result_data : op_t;
 
         procedure read(
             variable data : out op_t
@@ -71,22 +71,40 @@ begin
         begin
             read_en <= '1';
             wait for CLK_PERIOD;
-            read_en <= '0';
             data := read_data;
+            read_en <= '0';
         end procedure read;
 
     begin
 
         wait for CLK_PERIOD * 5;
 
-        for i in 0 to DEPTH * 2 loop
+        -- Write 4 values
+        for i in 0 to ((DEPTH / 2) - 1) loop
             write(std_logic_vector(to_unsigned(i, 32)));
         end loop;
 
         wait for CLK_PERIOD * 5;
 
-        for i in 0 to DEPTH * 2 loop
-            read(read_data);
+        -- Read 4 values
+        for i in 0 to ((DEPTH / 2) - 1) loop
+            read(result_data);
+            assert result_data = std_logic_vector(to_unsigned(i, 32)) report "Mismatch" severity error;
+        end loop;
+
+        wait for CLK_PERIOD * 5;
+
+        -- Write 16 values
+        for i in 0 to ((DEPTH * 2) - 1) loop
+            write(std_logic_vector(to_unsigned(i, 32)));
+        end loop;
+
+        wait for CLK_PERIOD * 5;
+
+        -- Read 16 values
+        for i in 0 to ((DEPTH * 2) - 1) loop
+            read(result_data);
+            assert result_data = std_logic_vector(to_unsigned(i, 32)) report "Mismatch" severity error;
         end loop;
 
         wait for CLK_PERIOD * 5;
